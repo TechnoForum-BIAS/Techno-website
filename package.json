@@ -1,0 +1,31 @@
+{
+  "name": "technoforum-platform",
+  "version": "1.0.0",
+  "description": "Technoforum BIAS Centralized Student Society Platform (Modular Monorepo)",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build",
+    "install:all": "npm install && npm --prefix client install && npm --prefix server install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "technoforum",
+    "bias",
+    "inventory",
+    "certificates",
+    "events",
+    "college"
+  ],
+  "author": "Technoforum Technical Society, BIAS",
+  "license": "ISC"
+}
