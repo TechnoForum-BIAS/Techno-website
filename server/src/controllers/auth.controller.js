@@ -6,7 +6,8 @@ const { JWT_SECRET } = require('../middleware/auth.middleware');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
 
 // Official Platform Super Admin
-const OFFICIAL_ADMIN_EMAIL = 'techno_forum@birlainstitute.co.in';
+const OFFICIAL_ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'techno_forum@birlainstitute.co.in').toLowerCase().trim();
+const ADMIN_EMAIL = OFFICIAL_ADMIN_EMAIL;
 
 // Normalize roles into: 'admin', 'coordinator', 'user'
 const normalizeRole = (role, email = '') => {
