@@ -29,16 +29,118 @@ Group 3 builds the **automated credentialing powerhouse** designed to serve both
                      ──> Draggable Verification QR Code [Toggle ON/OFF]
                               │
                               ▼
-[5. 100% Client-Side Generation] ──> Browser pdf-lib & JSZip generate vector PDFs
+[5. Pre-Flight Test Preview] ──> 1-Click "Preview 1st Certificate" in 1 second
+                             ──> Scan test QR on monitor with phone camera
+                              │
+                              ▼
+[6. 100% Client-Side Generation] ──> Browser pdf-lib & JSZip generate vector PDFs
                                  ──> Downloads .zip directly to coordinator's computer (0 bytes on server!)
                                  ──> Saves normalized batch metadata into Supabase to save space
                                  ──> Coordinator uploads the generated PDFs to their Google Drive
                               │
                               ▼
-[6. Public Verification] ──> Scanning QR code or searching ID opens instant verified card
+[7. Public Verification] ──> Scanning QR code or searching ID opens instant verified card
                          ──> Shows student name, event, date, position & link to Google Drive archive
                          ──> Student can "Bookmark / Showcase" certificate on profile with legal disclaimer
 ```
+
+---
+
+## 🧭 The Complete 7-Step End-to-End Generation Journey
+
+This is the exact screen-by-screen UX flow that Intern 5 and Intern 6 must build:
+
+### 🖥️ Step 1: Upload Base Certificate Template
+* **User**: Society Coordinator or Admin navigates to `/certificates/studio`.
+* **Action**:
+  1. Drags & drops or selects a blank certificate design file (`PNG`, `JPEG`, `SVG`, or single-page `PDF`).
+  2. The system loads the image at **natural native high resolution** (e.g. `1920 × 1080` Landscape) without lossy compression.
+  3. A thumbnail preview displays on screen with a resolution badge.
+* **Next Trigger**: Coordinator clicks **`[ Next: Add Participant Data ➔ ]`**.
+
+### 📋 Step 2: Load Participant Roster Data
+* **User selects the data source**:
+  * **Option A (Universal for any college club)**: Uploads a `.csv` or `.xlsx` file exported from Google Forms/Sheets.
+  * **Option B (Exclusive for TechnoForum in-house events)**: Selects a past event from a dropdown to automatically pull registered students from Group 1's database.
+* **System Action**:
+  * `PapaParse` reads the file client-side.
+  * Displays a **5-Row Preview Table** on screen with a row count badge (*"Loaded 142 participants"*).
+* **Next Trigger**: Coordinator clicks **`[ Next: Verify Certificate IDs ➔ ]`**.
+
+### 🆔 Step 3: Smart Certificate ID Check & Sequence Generator
+* **Automatic System Inspection**:
+  * **Case A (CSV already has a `CertificateId` column)**:
+    * The system queries the database to ensure none of the IDs already exist. If all are unique, it proceeds directly.
+  * **Case B (No `CertificateId` column detected)**:
+    * The **Certificate ID Modal** pops up with an explanation:
+      > *"No Certificate IDs found. Enter a prefix to generate verifiable credentials:"*
+    * Coordinator types their society & event prefix:
+      ```
+      BIAS-TF-RC-2026
+      ```
+    * The system automatically generates zero-padded numbers:
+      * `BIAS-TF-RC-2026-001`
+      * `BIAS-TF-RC-2026-002` ... up to `-142`
+    * *(Optional)*: If the coordinator clicks *"Skip ID Generation"*, a yellow warning is shown:  
+      *⚠️ "Without Certificate IDs, verification QR codes cannot be printed and certificates will not be verifiable on the public portal."*
+* **Next Trigger**: Coordinator clicks **`[ Next: Design Certificate Layout ➔ ]`**.
+
+### 🎨 Step 4: Visual Canvas Studio (Drag, Drop & Position QR)
+* **Canvas Display**: The uploaded certificate template is displayed in the center of the screen.
+* **Dynamic Tag Palette (Left Sidebar)**:
+  1. Every column from the CSV appears as a draggable chip:
+     `{Student Name}`, `{Position}`, `{Event}`, `{Date}`, `{CertificateId}`.
+  2. Clicking or dragging a chip onto the canvas renders the **real text from Row 1** (e.g., *"Aarav Sharma"*, *"Winner"*).
+  3. **Styling Controls** (updates in real time):
+     * Font Size slider (`14px` to `72px`)
+     * Color Picker (Hex codes: Gold `#D97706`, Slate `#0F172A`, White `#FFFFFF`)
+     * Text Alignment pills (`Left`, `Center`, `Right`)
+* **Verification QR Code Placement**:
+  1. Toggle switch: *"Include Digital Verification QR Code? [Yes / No]"*.
+  2. If **Yes**, a resizable, draggable QR box appears on the canvas. The coordinator positions it where it looks best (e.g., bottom-right or bottom-left corner).
+  3. If **No**, no QR code is added.
+
+### 🔍 Step 5: Pre-Flight Single Certificate Test Preview (Safety Step)
+* **Action**:
+  * Coordinator clicks **`[ 👁️ Test Preview 1st Certificate ]`**.
+  * The browser uses `pdf-lib` to generate a 1-page sample PDF in **under 1 second**.
+  * A modal displays the rendered PDF. The coordinator can scan the test QR code with their mobile phone right from their monitor to verify that the verification URL works!
+
+### ⚡ Step 6: 100% Client-Side Batch Generation & Local ZIP Download
+* **Coordinator Inputs Final Batch Details**:
+  * **Society Name**: `Technoforum`
+  * **Event Title**: `Autonomous RC Car Sprint 2026`
+  * **Issue Date**: Calendar date selector
+  * **Google Drive Archive URL**: `https://drive.google.com/drive/folders/...` *(Shared Google Drive folder link where coordinator will host final PDFs)*.
+* **Coordinator clicks `[ 🚀 Generate All Certificates & Download ZIP ]`**:
+  1. **Zero Server Load**: Client-side `pdf-lib` creates all vector PDFs in browser memory.
+  2. **Client-side `JSZip`** packages all PDFs into `certificates-BIAS-TF-RC-2026.zip`.
+  3. **Automatic Local Download**: Browser triggers file download to coordinator's PC.
+  4. **Space-Saving Database Sync**:
+     * Browser sends only the lightweight metadata array (<100 KB) to `POST /api/certificates/publish-batch`.
+     * Supabase creates 1 row in `certificate_batches` and student rows in `certificates`.
+
+### 🌐 Step 7: Public Verification & Student Access
+1. **Instant Verification via Phone Camera**:
+   * Anyone scans the printed QR code ➔ Browser opens `/certificates/verify?id=BIAS-TF-RC-2026-001`.
+   * Page instantly shows the green **"VERIFIED AUTHENTIC CREDENTIAL"** badge, student name, event title, award position, digital seal, and celebratory confetti.
+   * Button: **"Open Official Google Drive Archive ↗"** allows verifying the original PDF.
+2. **Student Profile Showcase**:
+   * Any student can enter their Certificate ID in their profile dashboard under *"My Certificate Showcase"* to pin it to their dashboard, accompanied by the official disclaimer.
+
+---
+
+### 👥 Intern Responsibility Matrix
+
+| Step | Intern Responsible | Key Deliverable Component |
+| :--- | :--- | :--- |
+| **Step 1 & 2** | **Intern 5** | `TemplateUploader.jsx` & `CsvRosterUploader.jsx` |
+| **Step 3** | **Intern 5** | `CertificateIdModal.jsx` (Prefix `BIAS-<SOCIETY>-<EVENT>-<YEAR>` & sequence logic) |
+| **Step 4** | **Intern 6** | `CanvasCoordinateEditor.jsx` (Draggable CSV tags, QR positioner & typography) |
+| **Step 5 & 6** | **Intern 6** | `BatchZipGenerator.jsx` (Client-side `pdf-lib` + `JSZip` engine & Drive linker) |
+| **Step 7** | **Intern 6** | `CertificateVerifyPage.jsx` & `ProfilePage.jsx` (QR verification, confetti & showcase) |
+
+---
 
 ---
 
