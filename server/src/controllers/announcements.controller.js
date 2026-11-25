@@ -127,6 +127,9 @@ const createAnnouncement = async (req, res) => {
       const dbPayload = {
         title: newAnnouncement.title,
         category: newAnnouncement.category,
+        priority: newAnnouncement.priority,
+        time: newAnnouncement.time,
+        target_audience: newAnnouncement.targetAudience,
         content: newAnnouncement.content,
         flyer_url: newAnnouncement.flyerUrl,
         is_pinned: newAnnouncement.isPinned,
@@ -178,6 +181,9 @@ const updateAnnouncement = async (req, res) => {
       const dbPayload = {
         title: title.trim(),
         category: category || 'General Notice',
+        priority: priority || 'Normal',
+        time: time || '10:00 AM',
+        target_audience: targetAudience || 'All Students & Faculty',
         content: content.trim(),
         flyer_url: flyerUrl,
         is_pinned: Boolean(isPinned),

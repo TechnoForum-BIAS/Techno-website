@@ -15,6 +15,10 @@ client/.env
 !.env.example
 !server/.env.example
 !client/.env.example
+TECHNOFORUM_INTERN_BRIEF_AND_CREDENTIALS.*
+*.doc
+*.docx
+generate_word_docs.py
 
 # Production Build Outputs
 dist/
