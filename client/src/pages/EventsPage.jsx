@@ -98,7 +98,7 @@ const EventsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-brand-border pb-6">
         <div>
@@ -123,11 +123,10 @@ const EventsPage = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                selectedCategory === cat
-                  ? 'bg-brand-blue text-white shadow-sm glow-blue'
-                  : 'bg-brand-card hover:bg-brand-cardHover text-slate-300 border border-brand-border'
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat
+                ? 'bg-brand-blue text-white shadow-sm glow-blue'
+                : 'bg-brand-card hover:bg-brand-cardHover text-slate-300 border border-brand-border'
+                }`}
             >
               {cat}
             </button>
@@ -166,9 +165,8 @@ const EventsPage = () => {
                   <span className="px-2.5 py-1 rounded-md bg-brand-blue/20 text-brand-cyan text-[11px] font-semibold border border-brand-cyan/20">
                     {evt.category}
                   </span>
-                  <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${
-                    evt.status === 'upcoming' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800' : 'bg-amber-950/60 text-amber-400'
-                  }`}>
+                  <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${evt.status === 'upcoming' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800' : 'bg-amber-950/60 text-amber-400'
+                    }`}>
                     {evt.status}
                   </span>
                 </div>

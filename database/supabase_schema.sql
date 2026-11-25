@@ -1,21 +1,21 @@
 -- =====================================================================
--- TECHNOFORUM CENTRALIZED PLATFORM - SUPABASE POSTGRESQL SCHEMA
+-- TECHNOFORUM CENTRALIZED PLATFORM - MASTER SUPABASE SCHEMA
 -- BIRLA INSTITUTE OF APPLIED SCIENCES (BIAS), BHIMTAL
 -- =====================================================================
 
--- Enable UUID extension
+-- 0. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ---------------------------------------------------------------------
--- 1. USERS & ROLES TABLE
+-- 1. USERS TABLE (Supports 3 Roles: admin, coordinator, user + Google OAuth)
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    roll_number VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'coordinator', 'user', 'student', 'super_admin')),
+    roll_number VARCHAR(50) UNIQUE,
+    password_hash VARCHAR(255),
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'coordinator', 'user')),
     is_verified BOOLEAN DEFAULT FALSE,
     verification_code VARCHAR(10),
     verification_token VARCHAR(255),
@@ -23,13 +23,16 @@ CREATE TABLE IF NOT EXISTS public.users (
     reset_code VARCHAR(10),
     reset_token VARCHAR(255),
     reset_expires TIMESTAMP WITH TIME ZONE,
+    auth_provider VARCHAR(50) DEFAULT 'local',
+    avatar_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for instant lookup by roll number or email
-CREATE INDEX IF NOT EXISTS idx_users_roll_number ON public.users(roll_number);
+-- Fast lookup indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_roll_number ON public.users(roll_number);
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 
 -- ---------------------------------------------------------------------
 -- 2. EVENTS & PARTICIPATION TABLE
@@ -80,16 +83,16 @@ CREATE TABLE IF NOT EXISTS public.inventory_items (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Unique Serial Items (Extension boards, Arduino kits with unique barcode stickers)
+-- Unique Serial Number Tracking (e.g., Extension Boards BIAS-EXT-001)
 CREATE TABLE IF NOT EXISTS public.inventory_tracked_units (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     item_id UUID NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
-    serial_number VARCHAR(100) UNIQUE NOT NULL, -- e.g. BIAS-EXT-001
+    serial_number VARCHAR(100) UNIQUE NOT NULL,
     condition VARCHAR(50) DEFAULT 'working' CHECK (condition IN ('working', 'damaged', 'missing')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Transactions / Student Issue Logs
+-- Student Issue Log & Returns
 CREATE TABLE IF NOT EXISTS public.inventory_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     item_id UUID NOT NULL REFERENCES public.inventory_items(id),
@@ -109,11 +112,11 @@ CREATE INDEX IF NOT EXISTS idx_inventory_tx_roll_number ON public.inventory_tran
 CREATE INDEX IF NOT EXISTS idx_inventory_tx_status ON public.inventory_transactions(status);
 
 -- ---------------------------------------------------------------------
--- 4. E-CERTIFICATES & VERIFICATION REGISTRY
+-- 4. E-CERTIFICATE & VERIFICATION REGISTRY
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.certificates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    certificate_id VARCHAR(100) UNIQUE NOT NULL, -- e.g. TF-2026-TH-0001
+    certificate_id VARCHAR(100) UNIQUE NOT NULL,
     student_name VARCHAR(255) NOT NULL,
     roll_number VARCHAR(50) NOT NULL,
     event_title VARCHAR(255) NOT NULL,
@@ -130,7 +133,7 @@ CREATE INDEX IF NOT EXISTS idx_certificates_roll_number ON public.certificates(r
 CREATE INDEX IF NOT EXISTS idx_certificates_name ON public.certificates(student_name);
 
 -- ---------------------------------------------------------------------
--- 5. ANNOUNCEMENTS & FLYERS
+-- 5. ANNOUNCEMENTS & CIRCULAR FLYERS
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.announcements (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -145,8 +148,33 @@ CREATE TABLE IF NOT EXISTS public.announcements (
 );
 
 -- =====================================================================
--- INITIAL SEED DATA FOR TESTING
+-- OFFICIAL SEED DATA
 -- =====================================================================
+
+-- 1. Official Super Admin Account: techno_forum@birlainstitute.co.in
+-- Default password: Admin@BIAS2026 (Pre-verified)
+INSERT INTO public.users (
+    name, 
+    email, 
+    roll_number, 
+    password_hash, 
+    role, 
+    is_verified, 
+    auth_provider
+)
+VALUES (
+    'Technoforum Admin',
+    'techno_forum@birlainstitute.co.in',
+    'TF-ADMIN-01',
+    '$2a$10$6ehHp2dnXPzE.gU5804yfOsnram.NQ7qF3/roLEarrmq3E40ZU1jG',
+    'admin',
+    TRUE,
+    'local'
+)
+ON CONFLICT (email) DO UPDATE 
+SET role = 'admin', is_verified = TRUE;
+
+-- 2. Initial Sample Hardware Inventory
 INSERT INTO public.inventory_items (name, category, quantity_total, quantity_available, unit, serial_prefix)
 VALUES 
 ('Arduino Uno R3 Dev Board', 'Microcontrollers', 25, 20, 'pcs', 'BIAS-ARD'),
@@ -155,6 +183,7 @@ VALUES
 ('10k Ohm Metal Film Resistors (Pack of 10)', 'Passive Components', 100, 85, 'packs', 'BIAS-RES-10K')
 ON CONFLICT DO NOTHING;
 
+-- 3. Initial Sample Verified Certificates
 INSERT INTO public.certificates (certificate_id, student_name, roll_number, event_title, position, issue_date)
 VALUES
 ('TF-2026-TH-001', 'Aarav Sharma', '230101', 'TechnoHacks 2026 Flagship Hackathon', 'First Runner Up', '2026-11-20'),

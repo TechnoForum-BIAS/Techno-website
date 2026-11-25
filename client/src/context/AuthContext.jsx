@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
@@ -6,16 +6,10 @@ export const AuthProvider = ({ children }) => {
   // Pre-loaded user session for smooth testing
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('tf_user');
-    return saved ? JSON.parse(saved) : {
-      id: 'usr-user-01',
-      name: 'Aarav Sharma',
-      email: 'aarav.2023@bias.ac.in',
-      rollNumber: '230101',
-      role: 'user' // 'admin' | 'coordinator' | 'user'
-    };
+    return saved ? JSON.parse(saved) : null;
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem('tf_token') || 'mock-dev-token');
+  const [token, setToken] = useState(() => localStorage.getItem('tf_token') || null);
 
   const loginUser = (userData, authToken) => {
     setUser(userData);
@@ -72,6 +66,20 @@ export const AuthProvider = ({ children }) => {
     return res.json();
   };
 
+  // API Call: Google OAuth
+  const googleLogin = async ({ email, name, picture, googleId, role }) => {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, picture, googleId, role })
+    });
+    const data = await res.json();
+    if (data.success && data.token && data.user) {
+      loginUser(data.user, data.token);
+    }
+    return data;
+  };
+
   // API Call: Forgot Password
   const forgotPassword = async (email) => {
     const res = await fetch('/api/auth/forgot-password', {
@@ -102,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       signup,
       verifyEmail,
       resendOtp,
+      googleLogin,
       forgotPassword,
       resetPassword
     }}>

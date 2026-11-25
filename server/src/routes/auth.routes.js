@@ -5,6 +5,7 @@ const {
   verifyEmail,
   resendVerification,
   login,
+  googleAuth,
   forgotPassword,
   resetPassword,
   getMe
@@ -15,6 +16,9 @@ const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 // Authentication & Registration with Rate Limiting
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
+
+// Google OAuth fast sign in / sign up
+router.post('/google', authLimiter, googleAuth);
 
 // Email Verification with OTP & Resend with Rate Limiting
 router.post('/verify-email', otpLimiter, verifyEmail);

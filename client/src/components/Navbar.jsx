@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { 
-  Cpu, 
-  Calendar, 
-  Boxes, 
-  Award, 
-  Search, 
-  Bell, 
-  ShoppingCart, 
-  User, 
-  Menu, 
+import {
+  Cpu,
+  Calendar,
+  Boxes,
+  Award,
+  Search,
+  Bell,
+  ShoppingCart,
+  User,
+  Menu,
   X,
   ShieldCheck
 } from 'lucide-react';
@@ -37,7 +37,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-md border-b border-brand-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          
+
           {/* Logo & Society Brand */}
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-brand-blue to-brand-cyan flex items-center justify-center glow-cyan group-hover:scale-105 transition-transform">
@@ -62,11 +62,10 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    active
-                      ? 'bg-brand-blue/20 text-brand-cyan border border-brand-cyan/30'
-                      : 'text-slate-300 hover:text-white hover:bg-brand-card'
-                  }`}
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${active
+                    ? 'bg-brand-blue/20 text-brand-cyan border border-brand-cyan/30'
+                    : 'text-slate-300 hover:text-white hover:bg-brand-card'
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{link.name}</span>
@@ -102,13 +101,12 @@ const Navbar = () => {
                     const nextRole = roles[(currentIdx + 1) % roles.length];
                     switchRole(nextRole);
                   }}
-                  className={`px-2.5 py-1 rounded font-semibold font-mono text-[11px] transition-all ${
-                    user.role === 'admin'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : user.role === 'coordinator'
+                  className={`px-2.5 py-1 rounded font-semibold font-mono text-[11px] transition-all ${user.role === 'admin'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : user.role === 'coordinator'
                       ? 'bg-brand-blue text-white shadow-sm'
                       : 'bg-brand-cardHover text-brand-cyan border border-brand-cyan/20'
-                  }`}
+                    }`}
                   title="Click to cycle between User, Coordinator, and Admin"
                 >
                   {user.role.toUpperCase()}
@@ -171,11 +169,10 @@ const Navbar = () => {
                 key={link.name}
                 to={link.path}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium ${
-                  isActive(link.path)
-                    ? 'bg-brand-blue/20 text-brand-cyan border border-brand-cyan/30'
-                    : 'text-slate-300 hover:bg-brand-card'
-                }`}
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium ${isActive(link.path)
+                  ? 'bg-brand-blue/20 text-brand-cyan border border-brand-cyan/30'
+                  : 'text-slate-300 hover:bg-brand-card'
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{link.name}</span>

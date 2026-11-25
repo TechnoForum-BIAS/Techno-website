@@ -53,7 +53,7 @@ const AnnouncementsPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      
+
       {/* Header */}
       <div className="border-b border-brand-border pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -75,9 +75,8 @@ const AnnouncementsPage = () => {
         {announcements.map((ann) => (
           <div
             key={ann.id}
-            className={`rounded-2xl bg-brand-card border ${
-              ann.isPinned ? 'border-brand-cyan/40 bg-brand-card/90' : 'border-brand-border'
-            } p-6 sm:p-8 glow-card space-y-4 relative overflow-hidden`}
+            className={`rounded-2xl bg-brand-card border ${ann.isPinned ? 'border-brand-cyan/40 bg-brand-card/90' : 'border-brand-border'
+              } p-6 sm:p-8 glow-card space-y-4 relative overflow-hidden`}
           >
             {ann.isPinned && (
               <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-brand-cyan/20 border border-brand-cyan/30 text-brand-cyan text-[11px] font-semibold">

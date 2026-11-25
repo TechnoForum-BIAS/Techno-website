@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Lock, 
@@ -12,43 +12,43 @@ import {
   ArrowRight, 
   RefreshCw, 
   Hash, 
-  Sparkles,
-  ShieldCheck,
   Cpu
 } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login, signup, verifyEmail, resendOtp, forgotPassword, resetPassword } = useAuth();
+  const { login, signup, verifyEmail, resendOtp, googleLogin, forgotPassword, resetPassword } = useAuth();
 
-  // Active view: 'login' | 'signup' | 'verify' | 'forgot' | 'reset'
+  // Active view: 'login' | 'signup' | 'verify' | 'forgot'
   const [activeTab, setActiveTab] = useState('login');
 
   // Shared state
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Login Form
-  const [loginIdentifier, setLoginIdentifier] = useState('230101');
-  const [loginPassword, setLoginPassword] = useState('user123');
+  // Sign In Form State
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginRole, setLoginRole] = useState('user'); // Dropdown: 'user' | 'coordinator' | 'admin'
 
-  // Signup Form
+  // Sign Up Form State
   const [signupForm, setSignupForm] = useState({
     name: '',
     email: '',
     rollNumber: '',
     password: '',
-    role: 'user' // 'user' | 'coordinator' | 'admin'
+    role: 'user' // Dropdown: 'user' | 'coordinator' | 'admin'
   });
 
-  // Verify Email Form
+  // Verify Email Form State
   const [verifyEmailAddress, setVerifyEmailAddress] = useState('');
   const [verifyOtpCode, setVerifyOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Forgot & Reset Password Form
+  // Forgot & Reset Password Form State
   const [resetEmailAddress, setResetEmailAddress] = useState('');
   const [resetOtpCode, setResetOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -87,24 +87,9 @@ const LoginPage = () => {
     setSuccessMessage('');
   };
 
-  // Quick switch role preset for demo / intern testing
-  const applyPreset = (presetRole) => {
-    clearAlerts();
-    if (presetRole === 'admin') {
-      setLoginIdentifier('admin@bias.ac.in');
-      setLoginPassword('admin123');
-    } else if (presetRole === 'coordinator') {
-      setLoginIdentifier('coordinator@bias.ac.in');
-      setLoginPassword('coord123');
-    } else {
-      setLoginIdentifier('aarav.2023@bias.ac.in');
-      setLoginPassword('user123');
-    }
-  };
-
   // --- Handlers ---
 
-  // 1. Handle Login
+  // 1. Handle Standard Sign In
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     clearAlerts();
@@ -114,7 +99,11 @@ const LoginPage = () => {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: loginIdentifier, password: loginPassword })
+        body: JSON.stringify({ 
+          identifier: loginIdentifier, 
+          password: loginPassword,
+          role: loginRole 
+        })
       });
       const data = await res.json();
       setLoading(false);
@@ -138,7 +127,7 @@ const LoginPage = () => {
     }
   };
 
-  // 2. Handle Signup
+  // 2. Handle Sign Up
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     clearAlerts();
@@ -155,7 +144,7 @@ const LoginPage = () => {
 
       setVerifyEmailAddress(signupForm.email);
       setActiveTab('verify');
-      setSuccessMessage(data.message || 'Registration successful! Enter the 6-digit code sent to your email.');
+      setSuccessMessage('Registration successful! Please enter the 6-digit verification code sent to your email.');
     } catch (err) {
       setLoading(false);
       setErrorMessage('Error communicating with server: ' + err.message);
@@ -193,7 +182,7 @@ const LoginPage = () => {
   // 4. Handle Resend OTP
   const handleResendOtp = async () => {
     if (!verifyEmailAddress) {
-      setErrorMessage('Please enter your email address to resend OTP.');
+      setErrorMessage('Please enter your email address to resend the code.');
       return;
     }
     clearAlerts();
@@ -209,14 +198,51 @@ const LoginPage = () => {
       }
 
       setResendCooldown(45);
-      setSuccessMessage('A fresh 6-digit verification code has been dispatched to your email.');
+      setSuccessMessage('A fresh 6-digit verification code has been dispatched via Brevo.');
     } catch (err) {
       setLoading(false);
       setErrorMessage('Failed to resend: ' + err.message);
     }
   };
 
-  // 5. Handle Forgot Password Request (Step 1)
+  // 5. Handle Google OAuth Sign-In / Sign-Up
+  const handleGoogleAuth = async () => {
+    clearAlerts();
+    setGoogleLoading(true);
+
+    try {
+      // Prompt user or use Google Identity prompt
+      const promptEmail = window.prompt("Enter your Google Account email for Fast Sign-In / Sign-Up:");
+      if (!promptEmail) {
+        setGoogleLoading(false);
+        return;
+      }
+
+      const promptName = promptEmail.split('@')[0];
+      const data = await googleLogin({
+        email: promptEmail,
+        name: promptName,
+        role: activeTab === 'signup' ? signupForm.role : loginRole
+      });
+
+      setGoogleLoading(false);
+
+      if (!data.success) {
+        setErrorMessage(data.message || 'Google sign-in failed.');
+        return;
+      }
+
+      setSuccessMessage('Google authentication successful! Entering platform...');
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+    } catch (err) {
+      setGoogleLoading(false);
+      setErrorMessage('Google OAuth error: ' + err.message);
+    }
+  };
+
+  // 6. Handle Forgot Password Request (Step 1)
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
     clearAlerts();
@@ -232,14 +258,14 @@ const LoginPage = () => {
       }
 
       setResetStep(2);
-      setSuccessMessage('If an account exists for this email, a 6-digit reset code has been sent.');
+      setSuccessMessage('A 6-digit password reset code has been dispatched via Brevo.');
     } catch (err) {
       setLoading(false);
       setErrorMessage('Error: ' + err.message);
     }
   };
 
-  // 6. Handle Reset Password (Step 2)
+  // 7. Handle Reset Password (Step 2)
   const handleResetSubmit = async (e) => {
     e.preventDefault();
     clearAlerts();
@@ -302,7 +328,7 @@ const LoginPage = () => {
           </p>
         </div>
 
-        {/* Global Notifications (Error / Success / Rate Limit) */}
+        {/* Global Notifications */}
         {errorMessage && (
           <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800 text-rose-300 text-xs flex items-start space-x-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -317,95 +343,119 @@ const LoginPage = () => {
           </div>
         )}
 
+        {/* Google OAuth Button (Visible on Login & Signup) */}
+        {(activeTab === 'login' || activeTab === 'signup') && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={googleLoading}
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-800 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2.5 transition-colors shadow-sm"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>{googleLoading ? 'Connecting Google...' : 'Continue with Google (Fast Access)'}</span>
+            </button>
+
+            <div className="flex items-center space-x-3 text-xs text-brand-muted">
+              <div className="flex-1 h-px bg-brand-border"></div>
+              <span>OR USE EMAIL</span>
+              <div className="flex-1 h-px bg-brand-border"></div>
+            </div>
+          </div>
+        )}
+
         {/* =========================================================================
             TAB 1: SIGN IN (LOGIN)
         ========================================================================= */}
         {activeTab === 'login' && (
-          <div className="space-y-5">
-            {/* Quick Demo Preset Selector for Interns */}
+          <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+            {/* Role Dropdown List */}
             <div>
-              <div className="text-[11px] text-brand-muted font-mono mb-1.5 flex items-center justify-between">
-                <span>Quick Role Demo:</span>
-                <span className="text-brand-cyan font-semibold">Click to Test Role</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 bg-brand-bg p-1 rounded-xl border border-brand-border text-xs">
-                <button
-                  type="button"
-                  onClick={() => applyPreset('user')}
-                  className="py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-brand-card font-semibold text-[11px]"
+              <label className="block text-slate-300 mb-1">Select Login Role</label>
+              <div className="relative">
+                <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <select
+                  value={loginRole}
+                  onChange={(e) => setLoginRole(e.target.value)}
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan font-mono"
                 >
-                  User
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset('coordinator')}
-                  className="py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-brand-card font-semibold text-[11px]"
-                >
-                  Coordinator
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset('admin')}
-                  className="py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-brand-card font-semibold text-[11px]"
-                >
-                  Admin
-                </button>
+                  <option value="user">User (Student Member)</option>
+                  <option value="coordinator">Coordinator (Events / Hardware)</option>
+                  <option value="admin">Admin (techno_forum@birlainstitute.co.in)</option>
+                </select>
               </div>
             </div>
 
-            <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-300 mb-1">University Roll Number or Email</label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="text"
-                    required
-                    value={loginIdentifier}
-                    onChange={(e) => setLoginIdentifier(e.target.value)}
-                    placeholder="e.g. 230101 or user@bias.ac.in"
-                    className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan"
-                  />
-                </div>
+            {/* Email or Roll Number */}
+            <div>
+              <label className="block text-slate-300 mb-1">University Roll Number or Email</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={loginIdentifier}
+                  onChange={(e) => setLoginIdentifier(e.target.value)}
+                  placeholder="e.g. 230101 or techno_forum@birlainstitute.co.in"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan"
+                />
               </div>
+            </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-slate-300">Password</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAlerts();
-                      setActiveTab('forgot');
-                      setResetStep(1);
-                    }}
-                    className="text-[11px] text-brand-cyan hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="password"
-                    required
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan"
-                  />
-                </div>
+            {/* Password */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-slate-300">Password</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearAlerts();
+                    setActiveTab('forgot');
+                    setResetStep(1);
+                  }}
+                  className="text-[11px] text-brand-cyan hover:underline"
+                >
+                  Forgot Password?
+                </button>
               </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan"
+                />
+              </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-brand-blue text-white font-bold text-xs glow-blue transition-all flex items-center justify-center space-x-2"
-              >
-                <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-brand-blue text-white font-bold text-xs glow-blue transition-all flex items-center justify-center space-x-2"
+            >
+              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
 
             <div className="text-center pt-2 border-t border-brand-border/60 text-xs text-slate-400">
               Don't have an account yet?{' '}
@@ -417,109 +467,111 @@ const LoginPage = () => {
                 }}
                 className="text-brand-cyan font-semibold hover:underline"
               >
-                Create Account
+                Sign Up & Verify Email
               </button>
             </div>
-          </div>
+          </form>
         )}
 
         {/* =========================================================================
             TAB 2: SIGN UP (REGISTRATION)
         ========================================================================= */}
         {activeTab === 'signup' && (
-          <div className="space-y-4">
-            <form onSubmit={handleSignupSubmit} className="space-y-3.5 text-xs">
+          <form onSubmit={handleSignupSubmit} className="space-y-3.5 text-xs">
+            {/* Full Name */}
+            <div>
+              <label className="block text-slate-300 mb-1">Full Name</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={signupForm.name}
+                  onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
+                  placeholder="e.g. Aarav Sharma"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
+                />
+              </div>
+            </div>
+
+            {/* Roll Number & Role Selection Dropdown */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-slate-300 mb-1">Full Name</label>
+                <label className="block text-slate-300 mb-1">University Roll No</label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input
                     type="text"
                     required
-                    value={signupForm.name}
-                    onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
-                    placeholder="e.g. Aarav Sharma"
+                    value={signupForm.rollNumber}
+                    onChange={(e) => setSignupForm({ ...signupForm, rollNumber: e.target.value })}
+                    placeholder="e.g. 230101"
                     className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 mb-1">Roll Number</label>
-                  <div className="relative">
-                    <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                    <input
-                      type="text"
-                      required
-                      value={signupForm.rollNumber}
-                      onChange={(e) => setSignupForm({ ...signupForm, rollNumber: e.target.value })}
-                      placeholder="e.g. 230101"
-                      className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 mb-1">Assign Role</label>
-                  <select
-                    value={signupForm.role}
-                    onChange={(e) => setSignupForm({ ...signupForm, role: e.target.value })}
-                    className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-cyan font-mono"
-                  >
-                    <option value="user">User (Student)</option>
-                    <option value="coordinator">Coordinator</option>
-                    <option value="admin">Admin</option>
-                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1">Email Address</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="email"
-                    required
-                    value={signupForm.email}
-                    onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-                    placeholder="e.g. aarav@bias.ac.in"
-                    className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
-                  />
-                </div>
-                <span className="text-[10px] text-brand-muted mt-0.5 block">
-                  A 6-digit verification code will be dispatched via Brevo SMTP.
-                </span>
+                <label className="block text-slate-300 mb-1">Select Role</label>
+                <select
+                  value={signupForm.role}
+                  onChange={(e) => setSignupForm({ ...signupForm, role: e.target.value })}
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-cyan font-mono"
+                >
+                  <option value="user">User (Student)</option>
+                  <option value="coordinator">Coordinator</option>
+                  <option value="admin">Admin</option>
+                </select>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Password (Min 6 characters)</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={signupForm.password}
-                    onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
-                  />
-                </div>
+            {/* Email Address */}
+            <div>
+              <label className="block text-slate-300 mb-1">Email Address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="email"
+                  required
+                  value={signupForm.email}
+                  onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                  placeholder="e.g. student@bias.ac.in"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
+                />
               </div>
+              <span className="text-[10px] text-brand-muted mt-0.5 block">
+                A 6-digit verification code will be sent to this email via Brevo SMTP.
+              </span>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-brand-blue text-white font-bold text-xs glow-blue transition-all flex items-center justify-center space-x-2 mt-2"
-              >
-                <span>{loading ? 'Registering Account...' : 'Sign Up & Send Verification'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
+            {/* Password */}
+            <div>
+              <label className="block text-slate-300 mb-1">Password (Min 6 characters)</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={signupForm.password}
+                  onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-brand-blue text-white font-bold text-xs glow-blue transition-all flex items-center justify-center space-x-2 mt-2"
+            >
+              <span>{loading ? 'Dispatching Verification...' : 'Create Account & Send Verification'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
 
             <div className="text-center pt-2 border-t border-brand-border/60 text-xs text-slate-400">
-              Already have an account?{' '}
+              Already registered?{' '}
               <button
                 type="button"
                 onClick={() => {
@@ -531,7 +583,7 @@ const LoginPage = () => {
                 Sign In
               </button>
             </div>
-          </div>
+          </form>
         )}
 
         {/* =========================================================================
@@ -570,7 +622,7 @@ const LoginPage = () => {
                   className="w-full text-center tracking-[12px] font-mono text-2xl font-bold bg-brand-bg border-2 border-brand-cyan/60 rounded-xl py-3 text-brand-cyan focus:outline-none focus:border-brand-cyan glow-cyan"
                 />
                 <span className="text-[10px] text-center text-brand-muted block mt-1">
-                  Code expires in 15 minutes. Check spam or server logs if testing locally.
+                  Check your inbox or spam folder. Code is valid for 15 minutes.
                 </span>
               </div>
 
@@ -615,10 +667,9 @@ const LoginPage = () => {
         {activeTab === 'forgot' && (
           <div className="space-y-5">
             {resetStep === 1 ? (
-              // Step 1: Send Reset OTP
               <form onSubmit={handleForgotSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-slate-300 mb-1">Enter your registered email address</label>
+                  <label className="block text-slate-300 mb-1">Enter your registered email</label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     <input
@@ -626,12 +677,12 @@ const LoginPage = () => {
                       required
                       value={resetEmailAddress}
                       onChange={(e) => setResetEmailAddress(e.target.value)}
-                      placeholder="e.g. user@bias.ac.in"
+                      placeholder="e.g. student@bias.ac.in"
                       className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan"
                     />
                   </div>
                   <span className="text-[10px] text-brand-muted mt-1 block">
-                    We'll dispatch a 6-digit password reset code through Brevo SMTP.
+                    We'll dispatch a 6-digit password reset code via Brevo SMTP.
                   </span>
                 </div>
 
@@ -640,12 +691,11 @@ const LoginPage = () => {
                   disabled={loading}
                   className="w-full py-3 rounded-xl bg-brand-blue hover:bg-blue-600 text-white font-bold text-xs glow-blue transition-all flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Dispatching OTP...' : 'Send Password Reset Code'}</span>
+                  <span>{loading ? 'Dispatching Code...' : 'Send Password Reset Code'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
             ) : (
-              // Step 2: Enter OTP & New Password
               <form onSubmit={handleResetSubmit} className="space-y-3.5 text-xs">
                 <div>
                   <label className="block text-slate-300 mb-1">Registered Email</label>
