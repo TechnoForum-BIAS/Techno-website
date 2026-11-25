@@ -423,22 +423,24 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* AMAZON-STYLE ISSUE CART */}
-            <Link
-              to="/inventory"
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl hover:bg-brand-card border border-transparent hover:border-brand-border text-slate-300 hover:text-white transition-all flex-shrink-0"
-              title="Issued Hardware Components Cart"
-            >
-              <div className="relative">
-                <ShoppingCart className="w-5 h-5 text-brand-cyan" />
-                {totalItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-brand-cyan text-brand-bg font-extrabold text-[10px] w-4 h-4 rounded-full flex items-center justify-center glow-cyan shadow-sm animate-bounce">
-                    {totalItemsCount}
-                  </span>
-                )}
-              </div>
-              <span className="hidden sm:inline text-xs font-bold text-white">Cart</span>
-            </Link>
+            {/* INVENTORY SHORTCUT (ONLY VISIBLE AFTER USER LOGS IN) */}
+            {user && (
+              <Link
+                to="/inventory"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl hover:bg-brand-card border border-transparent hover:border-brand-border text-slate-300 hover:text-white transition-all flex-shrink-0"
+                title="Hardware Laboratory & Inventory"
+              >
+                <div className="relative">
+                  <Boxes className="w-5 h-5 text-brand-cyan" />
+                  {totalItemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-brand-cyan text-brand-bg font-extrabold text-[10px] w-4 h-4 rounded-full flex items-center justify-center glow-cyan shadow-sm animate-bounce">
+                      {totalItemsCount}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden sm:inline text-xs font-bold text-white">Inventory</span>
+              </Link>
+            )}
 
             {/* Mobile Hamburger Toggle */}
             <div className="flex md:hidden items-center ml-1">
@@ -550,14 +552,7 @@ const Navbar = () => {
 
           </div>
 
-          {/* Right Highlight: Direct Link to AI Table Component Scanner */}
-          <Link
-            to="/inventory"
-            className="hidden md:flex items-center space-x-1 text-[11px] text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0"
-          >
-            <Sparkles className="w-3 h-3 text-emerald-400" />
-            <span>AI Component Scanner Online</span>
-          </Link>
+
 
         </div>
       </div>
