@@ -4,15 +4,17 @@ Welcome to the Technoforum engineering team at Birla Institute of Applied Scienc
 
 ---
 
-## 1. Tech Stack Overview
+## 1. Clone vs Fork: Which Should Interns Use?
 
-* **Frontend (`/client`)**: React 18, Vite, Tailwind CSS, Lucide React, Three.js, Canvas API, Confetti Canvas (Runs on Port `5173`).
-* **Backend (`/server`)**: Node.js & Express REST API, PostgreSQL / Supabase, `pdf-lib`, `bwip-js`, `google-auth-library`, Brevo SMTP (Runs on Port `5000`).
-* **Database (`/database`)**: PostgreSQL schema (`database/supabase_schema.sql`) and sample student roster (`sample_students.csv`).
+> [!TIP]
+> **Recommended Industry Practice: DIRECT CLONE (as Collaborators)**  
+> 
+> * **Direct Clone (Recommended)**: You are added as a Collaborator to `https://github.com/TechnoForum-BIAS/Techno-website.git`. You clone once, switch to your dedicated branch, and push directly. There are no multiple remotes (`origin` vs `upstream`) to manage, and branch protection rules prevent any accidental pushes to `main`.
+> * **Fork**: If an intern does not have write access yet, they can fork to their GitHub profile, clone their fork, push there, and open a PR back to `develop`.
 
 ---
 
-## 2. 1-Command Local Setup
+## 2. 1-Command Local Setup (Direct Clone)
 
 Open your terminal or PowerShell and run:
 
@@ -21,18 +23,18 @@ Open your terminal or PowerShell and run:
 git clone https://github.com/TechnoForum-BIAS/Techno-website.git
 cd Techno-website
 
-# 2. Switch to the develop integration branch
-git checkout develop
+# 2. Switch directly to your personal assigned branch:
+# Intern 1: git checkout feat/intern1-hero-events
+# Intern 2: git checkout feat/intern2-registration-notices
+# Intern 3: git checkout feat/intern3-catalog-barcodes
+# Intern 4: git checkout feat/intern4-scanner-cart
+# Intern 5: git checkout feat/intern5-template-csv
+# Intern 6: git checkout feat/intern6-canvas-pdf-engine
 
-# 3. Switch to your team's assigned feature branch:
-# Group 1: git checkout feat/g1-landing-events
-# Group 2: git checkout feat/g2-inventory-scanner
-# Group 3: git checkout feat/g3-certificates-studio
-
-# 4. Install all dependencies across root, client, and server with 1 command:
+# 3. Install all dependencies across root, client, and server with 1 command:
 npm run install:all
 
-# 5. Start both client and server concurrently:
+# 4. Start both client and server concurrently:
 npm run dev
 ```
 

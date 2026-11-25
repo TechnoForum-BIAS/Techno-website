@@ -1,11 +1,11 @@
 # 👥 Group 1 Implementation Guide: Landing Experience, Events & Notices
-**Git Branch**: `feat/g1-landing-events`  
-**Team**: Intern 1 & Intern 2
+**Group Domain**: 3D Visuals, Hackathons, Team Registration & Circulars  
+**Assigned Interns**: Intern 1 & Intern 2
 
 ---
 
 ## 1. Intern 1 Ownership & Tasks
-
+* **Dedicated Branch**: `feat/intern1-hero-events`
 * **Assigned Files**:
   * `client/src/components/Hero3D.jsx`
   * `client/src/features/group1_events/EventCard.jsx`
@@ -34,7 +34,7 @@
 ---
 
 ## 2. Intern 2 Ownership & Tasks
-
+* **Dedicated Branch**: `feat/intern2-registration-notices`
 * **Assigned Files**:
   * `client/src/features/group1_events/EventRegistrationModal.jsx`
   * `client/src/pages/AnnouncementsPage.jsx`

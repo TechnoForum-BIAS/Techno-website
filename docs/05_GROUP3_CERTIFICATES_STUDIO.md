@@ -1,11 +1,11 @@
 # 👥 Group 3 Implementation Guide: E-Certificate Studio & Verification Hub
-**Git Branch**: `feat/g3-certificates-studio`  
-**Team**: Intern 5 & Intern 6
+**Group Domain**: Template Ingestion, CSV Parser, Canvas Visual Editor & Batch PDF-Lib Engine  
+**Assigned Interns**: Intern 5 & Intern 6
 
 ---
 
 ## 1. Intern 5 Ownership & Tasks
-
+* **Dedicated Branch**: `feat/intern5-template-csv`
 * **Assigned Files**:
   * `client/src/features/group3_certificates/TemplateUploader.jsx`
   * `client/src/features/group3_certificates/CsvRosterUploader.jsx`
@@ -30,7 +30,7 @@
 ---
 
 ## 2. Intern 6 Ownership & Tasks
-
+* **Dedicated Branch**: `feat/intern6-canvas-pdf-engine`
 * **Assigned Files**:
   * `client/src/features/group3_certificates/CanvasCoordinateEditor.jsx`
   * `client/src/features/group3_certificates/BatchZipGenerator.jsx`

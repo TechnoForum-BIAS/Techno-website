@@ -1,11 +1,11 @@
 # 👥 Group 2 Implementation Guide: Smart Hardware Inventory & AI Scanner
-**Git Branch**: `feat/g2-inventory-scanner`  
-**Team**: Intern 3 & Intern 4
+**Group Domain**: Component Catalog, Barcodes, AI Vision Table Scanner & Issue Cart  
+**Assigned Interns**: Intern 3 & Intern 4
 
 ---
 
 ## 1. Intern 3 Ownership & Tasks
-
+* **Dedicated Branch**: `feat/intern3-catalog-barcodes`
 * **Assigned Files**:
   * `client/src/features/group2_inventory/InventoryItemCard.jsx`
   * `client/src/features/group2_inventory/BarcodeModal.jsx`
@@ -32,7 +32,7 @@
 ---
 
 ## 2. Intern 4 Ownership & Tasks
-
+* **Dedicated Branch**: `feat/intern4-scanner-cart`
 * **Assigned Files**:
   * `client/src/features/group2_inventory/AiTableScannerModal.jsx`
   * `client/src/features/group2_inventory/IssueCartDrawer.jsx`

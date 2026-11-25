@@ -66,10 +66,13 @@ To make reading quick, focused, and easy, documentation has been separated into 
 git clone https://github.com/TechnoForum-BIAS/Techno-website.git
 cd Techno-website
 
-# 2. Checkout your assigned group branch
-# Group 1: git checkout feat/g1-landing-events
-# Group 2: git checkout feat/g2-inventory-scanner
-# Group 3: git checkout feat/g3-certificates-studio
+# 2. Checkout your dedicated personal branch:
+# Intern 1: git checkout feat/intern1-hero-events
+# Intern 2: git checkout feat/intern2-registration-notices
+# Intern 3: git checkout feat/intern3-catalog-barcodes
+# Intern 4: git checkout feat/intern4-scanner-cart
+# Intern 5: git checkout feat/intern5-template-csv
+# Intern 6: git checkout feat/intern6-canvas-pdf-engine
 
 # 3. Install & run
 npm run install:all

@@ -1,65 +1,95 @@
 # 🛡️ Technoforum BIAS: Git Workflow & Merge Conflict Resolution
 
-This guide outlines our team Git flow, the rules to avoid merge conflicts, and step-by-step instructions on how to resolve conflicts cleanly without losing work.
+This guide outlines our team Git flow, the Clone vs Fork strategy, how each intern commits to their own branch, and step-by-step instructions on resolving conflicts cleanly.
 
 ---
 
-## 1. Branch Hierarchy
+## 1. Clone vs Fork Strategy: Which is Best?
+
+### 🏆 Recommended: Direct Clone as Collaborators (Industry Standard)
+The repository admin invites all 6 interns as **Collaborators** with `Write` access to `https://github.com/TechnoForum-BIAS/Techno-website.git`.
+
+* **Why Direct Clone is Best for Interns**:
+  1. **Single Remote**: Interns only have `origin`. Beginners do not have to manage confusing dual remotes (`origin` vs `upstream`).
+  2. **Dedicated Branches Pre-Created**: All 6 individual branches are already pushed to the remote repository. An intern simply runs `git checkout <their-branch>` and starts coding.
+  3. **Protected Main & Develop**: GitHub Branch Protection rules block anyone from accidentally pushing directly to `main` or `develop`. Work can only enter via reviewed Pull Requests.
+
+### What about Forking?
+* Forking is used in public open-source projects where contributors do not know each other.
+* For an internal team of 6 interns, forking adds unnecessary friction (keeping forks in sync with `upstream`, branch desynchronization, and complex multi-remote rebases).
+
+---
+
+## 2. The 6-Branch Architecture (Zero Teammate Conflicts)
+
+To prevent teammates inside the same group from conflicting with each other, **every single intern has their own dedicated feature branch**:
 
 ```
-                          ┌── feat/g1-landing-events (Intern 1 & 2)
-                          │
-main ────── develop ──────┼── feat/g2-inventory-scanner (Intern 3 & 4)
-                          │
-                          └── feat/g3-certificates-studio (Intern 5 & 6)
+                                  develop (Staging Integration)
+                                                │
+        ┌───────────────────────┬───────────────┴───────────────┬───────────────────────┐
+        ▼                       ▼                               ▼                       ▼
+GROUP 1:                GROUP 2:                        GROUP 3:
+├── feat/intern1-...    ├── feat/intern3-...            ├── feat/intern5-...
+└── feat/intern2-...    └── feat/intern4-...            └── feat/intern6-...
 ```
 
-* **`main`**: Production release only. Never push directly to `main`.
-* **`develop`**: Primary staging branch where all feature PRs are merged and tested.
-* **`feat/...`**: The 3 isolated feature branches where each intern group writes code.
+| Intern | Personal Feature Branch | Isolated Component Ownership |
+| :--- | :--- | :--- |
+| **Intern 1** | `feat/intern1-hero-events` | `Hero3D.jsx`, `EventCard.jsx`, `events.routes.js` |
+| **Intern 2** | `feat/intern2-registration-notices` | `EventRegistrationModal.jsx`, `AnnouncementsPage.jsx`, `events.controller.js` |
+| **Intern 3** | `feat/intern3-catalog-barcodes` | `InventoryItemCard.jsx`, `BarcodeModal.jsx`, `barcodeGenerator.js` |
+| **Intern 4** | `feat/intern4-scanner-cart` | `AiTableScannerModal.jsx`, `IssueCartDrawer.jsx`, `inventory.controller.js` |
+| **Intern 5** | `feat/intern5-template-csv` | `TemplateUploader.jsx`, `CsvRosterUploader.jsx`, `certificates.routes.js` |
+| **Intern 6** | `feat/intern6-canvas-pdf-engine` | `CanvasCoordinateEditor.jsx`, `BatchZipGenerator.jsx`, `CertificateVerifyPage.jsx` |
+
+### Why Teammate Conflicts Cannot Happen:
+1. Intern 1 and Intern 2 work in the same domain (Events), but Intern 1 only pushes to `feat/intern1-hero-events` and Intern 2 only pushes to `feat/intern2-registration-notices`.
+2. Git will **NEVER reject their push** because they are not pushing to the same branch.
+3. Because Intern 1 and Intern 2 edit completely separate files in `client/src/features/`, when both open PRs against `develop`, GitHub merges both **automatically with 0 merge conflicts**!
 
 ---
 
-## 2. The 5 Golden Rules to Completely Avoid Conflicts
+## 3. How to Commit & Push to Your Personal Branch
 
-1. **Never Touch Core Shared Files**:
-   Do NOT edit `App.jsx`, `Navbar.jsx`, `Footer.jsx`, `server/src/index.js`, or root `package.json`. Your subcomponents in `client/src/features/` are already wired in.
-2. **One Feature, One File**:
-   Work strictly inside your assigned file from the File Ownership Matrix. If Intern 1 is working on `EventCard.jsx`, Intern 2 works strictly on `EventRegistrationModal.jsx`.
-3. **Daily Sync First Thing in the Morning**:
-   Before writing any code each day, sync your local branch with `develop`:
-   ```bash
-   git checkout develop
-   git pull origin develop
-   git checkout <your-assigned-branch>
-   git merge develop
-   ```
-4. **Make Small, Atomic Commits**:
-   Commit small, logical units of work instead of hoarding 20 files over several days.
-5. **Always Pull with Rebase Before Pushing**:
-   ```bash
-   git fetch origin
-   git rebase origin/develop
-   ```
+```bash
+# 1. Switch to your dedicated branch
+git checkout <your-assigned-branch>
+
+# 2. Check changed files
+git status
+
+# 3. Stage your files
+git add <path-to-your-assigned-file>
+
+# 4. Commit with descriptive message
+git commit -m "feat(module): descriptive message of what you built"
+
+# 5. Before pushing, sync with latest develop
+git fetch origin
+git rebase origin/develop
+
+# 6. Push to remote
+git push origin <your-assigned-branch>
+
+# 7. Open Pull Request on GitHub against 'develop'
+```
 
 ---
 
-## 3. Step-by-Step: How to Solve a Merge Conflict
+## 4. Step-by-Step: How to Solve a Merge Conflict
 
-If Git alerts you with `CONFLICT (content): Merge conflict in ...` during a `merge` or `rebase`, **do not panic**. Follow this 6-step protocol:
+If Git ever alerts you with `CONFLICT (content): Merge conflict in ...` during a `merge` or `rebase`:
 
 ### Step 1: Identify Conflicted Files
 Run:
 ```bash
 git status
 ```
-Git will list conflicted files in red under `Unmerged paths:`, for example:
-```text
-both modified:   client/src/features/group1_events/EventCard.jsx
-```
+Git will list conflicted files in red under `Unmerged paths:`.
 
 ### Step 2: Open the File in VS Code
-Open the conflicted file. Git marks the collision with standard markers:
+Look for the standard Git conflict markers:
 ```javascript
 <<<<<<< HEAD (Current Change - Your Local Code)
 <button className="px-4 py-2 bg-brand-blue text-white rounded-xl">
@@ -78,29 +108,21 @@ In VS Code, clickable buttons appear above the conflict:
 * **Accept Incoming Change**: Takes the remote code from `develop` and discards your local lines.
 * **Manual Edit (Recommended)**: Delete the `<<<<<<<`, `=======`, and `>>>>>>>` lines manually and combine the best of both blocks into clean, valid code.
 
-### Step 4: Verify that All Conflict Markers Are Gone
-Search the file for `<<<<<<<`. If any markers remain, the code will fail to compile.
-
-### Step 5: Stage the Resolved File
+### Step 4: Verify and Stage
+Search for `<<<<<<<`. If no markers remain:
 ```bash
-git add client/src/features/group1_events/EventCard.jsx
+git add <resolved-file-path>
 ```
 
-### Step 6: Complete the Merge or Rebase
-* If rebasing:
-  ```bash
-  git rebase --continue
-  ```
-* If merging:
-  ```bash
-  git commit -m "merge: resolve conflicts with develop"
-  ```
+### Step 5: Complete Rebase or Merge
+* If rebasing: `git rebase --continue`
+* If merging: `git commit -m "merge: resolve conflicts with develop"`
 
 ---
 
-## 4. 🚨 Emergency Escape Hatch (Cancel & Return to Safety)
+## 5. 🚨 Emergency Escape Hatch (Cancel & Return to Safety)
 
-If you make an error while resolving conflicts and want to safely return your repository to the exact state it was before you started:
+If you get stuck or make a mistake while resolving conflicts:
 
 ```bash
 # If rebasing:
@@ -110,4 +132,4 @@ git rebase --abort
 git merge --abort
 ```
 
-This cancels the operation and returns your repository to a clean state without losing any of your previously committed work!
+This immediately cancels the operation and returns your repository to a clean state without losing any committed work!
