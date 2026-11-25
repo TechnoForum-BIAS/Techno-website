@@ -9,6 +9,7 @@ import CertificateStudioPage from './pages/CertificateStudioPage';
 import CertificateVerifyPage from './pages/CertificateVerifyPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/certificates/verify" element={<CertificateVerifyPage />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </main>
       <Footer />

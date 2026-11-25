@@ -433,10 +433,27 @@ const login = async (req, res) => {
  */
 const googleAuth = async (req, res) => {
   try {
-    const { email, name, picture, googleId, role } = req.body;
+    let { email, name, picture, credential, role } = req.body;
+
+    // Decode Google ID Token if passed from Google Identity Services (GSI)
+    if (credential) {
+      try {
+        const parts = credential.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          if (payload.email) {
+            email = payload.email;
+            name = payload.name || name;
+            picture = payload.picture || picture;
+          }
+        }
+      } catch (tokenErr) {
+        console.warn('Failed to decode Google credential payload:', tokenErr.message);
+      }
+    }
 
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Google email is required.' });
+      return res.status(400).json({ success: false, message: 'Valid Google email is required.' });
     }
 
     const cleanEmail = email.toLowerCase().trim();

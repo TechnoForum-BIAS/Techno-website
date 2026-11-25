@@ -12,7 +12,8 @@ import {
   ArrowRight, 
   RefreshCw, 
   Hash, 
-  Cpu
+  Cpu,
+  X
 } from 'lucide-react';
 
 const LoginPage = () => {
@@ -28,6 +29,11 @@ const LoginPage = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Google OAuth Modal State
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [googleEmailInput, setGoogleEmailInput] = useState('');
+  const [googleNameInput, setGoogleNameInput] = useState('');
 
   // Sign In Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -73,6 +79,44 @@ const LoginPage = () => {
     }
   }, [searchParams]);
 
+  // Google Identity Services (GSI) Auto-Render
+  useEffect(() => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (window.google?.accounts?.id && googleClientId && !googleClientId.includes('your-google')) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            if (response.credential) {
+              setGoogleLoading(true);
+              const data = await googleLogin({
+                credential: response.credential,
+                role: activeTab === 'signup' ? signupForm.role : loginRole
+              });
+              setGoogleLoading(false);
+              if (data.success) {
+                navigate('/');
+              } else {
+                setErrorMessage(data.message || 'Google authentication failed.');
+              }
+            }
+          }
+        });
+        const targetDiv = document.getElementById('google-btn-container');
+        if (targetDiv) {
+          window.google.accounts.id.renderButton(targetDiv, {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: 'continue_with'
+          });
+        }
+      } catch (err) {
+        console.warn('Google GSI init notice:', err);
+      }
+    }
+  }, [activeTab, signupForm.role, loginRole, googleLogin, navigate]);
+
   // Resend cooldown timer
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -89,7 +133,7 @@ const LoginPage = () => {
 
   // --- Handlers ---
 
-  // 1. Handle Standard Sign In
+  // 1. Handle Standard Sign In (Strict - Blocks unverified accounts)
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     clearAlerts();
@@ -112,7 +156,7 @@ const LoginPage = () => {
         if (data.notVerified) {
           setVerifyEmailAddress(data.email || loginIdentifier);
           setActiveTab('verify');
-          setErrorMessage(data.message || 'Please verify your email before logging in.');
+          setErrorMessage(data.message || 'Please verify your email before logging in. A 6-digit code was sent via Brevo.');
           return;
         }
         setErrorMessage(data.message || 'Login failed. Please check your credentials.');
@@ -127,7 +171,7 @@ const LoginPage = () => {
     }
   };
 
-  // 2. Handle Sign Up
+  // 2. Handle Sign Up (Strict - Triggers Brevo verification code)
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     clearAlerts();
@@ -172,14 +216,14 @@ const LoginPage = () => {
       setSuccessMessage('Email verified successfully! Entering platform...');
       setTimeout(() => {
         navigate('/');
-      }, 1200);
+      }, 1000);
     } catch (err) {
       setLoading(false);
       setErrorMessage('Verification failed: ' + err.message);
     }
   };
 
-  // 4. Handle Resend OTP
+  // 4. Handle Resend OTP via Brevo
   const handleResendOtp = async () => {
     if (!verifyEmailAddress) {
       setErrorMessage('Please enter your email address to resend the code.');
@@ -198,34 +242,30 @@ const LoginPage = () => {
       }
 
       setResendCooldown(45);
-      setSuccessMessage('A fresh 6-digit verification code has been dispatched via Brevo.');
+      setSuccessMessage('A fresh 6-digit verification code has been dispatched via Brevo SMTP.');
     } catch (err) {
       setLoading(false);
       setErrorMessage('Failed to resend: ' + err.message);
     }
   };
 
-  // 5. Handle Google OAuth Sign-In / Sign-Up
-  const handleGoogleAuth = async () => {
+  // 5. Google Sign-In Submission via Modal or GSI
+  const handleGoogleSubmitModal = async (e) => {
+    e.preventDefault();
+    if (!googleEmailInput) return;
+
     clearAlerts();
     setGoogleLoading(true);
 
     try {
-      // Prompt user or use Google Identity prompt
-      const promptEmail = window.prompt("Enter your Google Account email for Fast Sign-In / Sign-Up:");
-      if (!promptEmail) {
-        setGoogleLoading(false);
-        return;
-      }
-
-      const promptName = promptEmail.split('@')[0];
       const data = await googleLogin({
-        email: promptEmail,
-        name: promptName,
+        email: googleEmailInput,
+        name: googleNameInput || googleEmailInput.split('@')[0],
         role: activeTab === 'signup' ? signupForm.role : loginRole
       });
 
       setGoogleLoading(false);
+      setIsGoogleModalOpen(false);
 
       if (!data.success) {
         setErrorMessage(data.message || 'Google sign-in failed.');
@@ -343,12 +383,14 @@ const LoginPage = () => {
           </div>
         )}
 
-        {/* Google OAuth Button (Visible on Login & Signup) */}
+        {/* Google OAuth Fast Access Button */}
         {(activeTab === 'login' || activeTab === 'signup') && (
           <div className="space-y-3">
+            <div id="google-btn-container" className="w-full"></div>
+            
             <button
               type="button"
-              onClick={handleGoogleAuth}
+              onClick={() => setIsGoogleModalOpen(true)}
               disabled={googleLoading}
               className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-800 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2.5 transition-colors shadow-sm"
             >
@@ -375,7 +417,7 @@ const LoginPage = () => {
 
             <div className="flex items-center space-x-3 text-xs text-brand-muted">
               <div className="flex-1 h-px bg-brand-border"></div>
-              <span>OR USE EMAIL</span>
+              <span>OR ENTER CREDENTIALS</span>
               <div className="flex-1 h-px bg-brand-border"></div>
             </div>
           </div>
@@ -388,7 +430,7 @@ const LoginPage = () => {
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
             {/* Role Dropdown List */}
             <div>
-              <label className="block text-slate-300 mb-1">Select Login Role</label>
+              <label className="block text-slate-300 mb-1">Select Role</label>
               <div className="relative">
                 <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <select
@@ -786,6 +828,74 @@ const LoginPage = () => {
         )}
 
       </div>
+
+      {/* Clean In-App Google Sign-In Modal (Replaces buggy window.prompt) */}
+      {isGoogleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-brand-card border border-brand-border rounded-2xl max-w-sm w-full p-6 space-y-5 glow-card relative">
+            <button
+              onClick={() => setIsGoogleModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mx-auto shadow-sm">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white">Google Fast Authentication</h3>
+              <p className="text-[11px] text-slate-400">
+                Sign in or sign up with your Google account. Email is verified instantly by Google.
+              </p>
+            </div>
+
+            <form onSubmit={handleGoogleSubmitModal} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-300 mb-1">Google Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={googleEmailInput}
+                  onChange={(e) => setGoogleEmailInput(e.target.value)}
+                  placeholder="e.g. user@gmail.com"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1">Full Name (Optional)</label>
+                <input
+                  type="text"
+                  value={googleNameInput}
+                  onChange={(e) => setGoogleNameInput(e.target.value)}
+                  placeholder="e.g. Aarav Sharma"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
+                />
+              </div>
+
+              <div className="text-[11px] text-slate-400 bg-brand-bg p-2.5 rounded-xl border border-brand-border">
+                Role will be assigned as: <span className="font-semibold text-brand-cyan font-mono uppercase">{activeTab === 'signup' ? signupForm.role : loginRole}</span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={googleLoading}
+                className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs transition-colors flex items-center justify-center space-x-2"
+              >
+                <span>{googleLoading ? 'Authenticating...' : 'Sign In with Google'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
