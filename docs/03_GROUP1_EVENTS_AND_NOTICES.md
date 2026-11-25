@@ -70,10 +70,22 @@ The official TechnoForum circuit logos are saved in `client/public/assets/`:
 ---
 
 ### 📌 Task 1.3: Campus Notice Ticker Bar (`NoticeTickerBar.jsx`)
-* **Objective**: A sleek, animated breaking circulars ticker at the top of the homepage.
+* **Objective**: A sleek, animated breaking circulars ticker embedded **immediately below the Hero section and right above the Flagship Event Spotlight**.
 * **Behavior**:
   * Shows the latest urgent notices in an animated marquee or carousel.
   * Clicking any notice item opens a slide-over drawer or modal displaying the complete circular text and flyer.
+
+---
+
+### 📌 Task 1.4: Uniform Poster & Event Flyer Bulletin Card (`EventPosterCard.jsx`)
+* **Objective**: A dedicated visual card layout for diverse campus events (RC Car Racing, Hands-on Workshops, Mini-Hackathons, Robotics Sprints) that are typically announced with posters on WhatsApp groups.
+* **Layout Specifications**:
+  * **Consistent Image Frame**: Fixed aspect ratio (standard 4:5 vertical poster or 16:9 banner) with `object-cover` and rounded-t-2xl borders so all posters look clean and uniform regardless of original image size.
+  * **Card Metadata Below Poster**:
+    * Category badge (e.g. `RC Car Racing`, `Hands-on Workshop`, `Mini Hackathon`, `Robotics Sprint`).
+    * Event Title (bold, crisp typography).
+    * Date, Time & Campus Venue.
+  * **Action Button**: "View Full Info & Register" button opening the full-resolution poster modal and dynamic registration form.
 
 ---
 
@@ -92,12 +104,13 @@ The official TechnoForum circuit logos are saved in `client/public/assets/`:
 * **Step-by-Step Implementation**:
   1. **Template Selection**:
      * Preset templates: `Standard Solo Form`, `Hackathon Team Form (2-4 Members)`, `Workshop Feedback Form`.
-  2. **Dynamic Field Builder**:
-     * Allow coordinators to toggle or add custom fields:
-       * Team Name & Teammates (names + roll numbers)
-       * GitHub / Portfolio URL
-       * Year & Branch selection
-       * Short answer questions (e.g. *"What is your tech stack?"*)
+  2. **Standard Preset Palette Options**:
+     * Coordinators can toggle and configure the following field types:
+       * **Team Name & Teammates**: Multi-member inputs with Name + Roll Number.
+       * **Short Text Answer**: e.g., *"Project Idea / Tech Stack / Prior Experience"*.
+       * **GitHub / Portfolio URL**: Clean URL input with format validation.
+       * **Year of Study Dropdown**: `1st Year`, `2nd Year`, `3rd Year`, `4th Year`.
+       * **Branch / Department**: `CSE`, `ECE`, `IT`, `Other`.
   3. **Publish Schema**:
      * Saves the form schema to the event record (`custom_form_schema` JSON in database).
 
@@ -118,7 +131,11 @@ The official TechnoForum circuit logos are saved in `client/public/assets/`:
 * **Key Actions**:
   1. **View Roster**: Table showing registered students, roll numbers, submission time, and custom answers.
   2. **1-Click Download CSV**: Export the entire participant list for that event as a `.csv` file.
-  3. **Delete Roster / Clear Storage**: A "Clear Event Registrations" button with a confirmation prompt allowing coordinators to purge registration data once an event concludes to conserve database space.
+  3. **Safe Storage Deletion Protocol**:
+     * When coordinator clicks "Clear / Delete Registrations":
+       * **Step 1**: The modal prompts: *"Download Backup CSV First"* (automatic download triggered).
+       * **Step 2**: Requires typing `"DELETE"` or the exact Event Title to confirm permanent purge.
+       * This guarantees that data is never lost by accident while giving coordinators full power to keep storage clean!
 
 ---
 
