@@ -1,18 +1,32 @@
-# 👥 Group 2 Implementation Guide: Smart Hardware Inventory & AI Scanner
+# 👥 Group 2 Implementation Guide: Smart Hardware Inventory & Lab Loan System
 
-**Domain**: Laboratory Component Catalog, Unique Serial Tracking, Barcode Generation, AI Table Scanner & Issue Cart  
-**Assigned Interns**: **Intern 3** (Catalog Cards & Barcode Generation) & **Intern 4** (AI Vision Scanner & Issue Cart Drawer)  
-**Parent Pages**: `client/src/pages/InventoryPage.jsx`, `client/src/context/CartContext.jsx`
+**Domain**: Laboratory Component Catalog, Item ID Barcodes, AI Vision Table Scanner, In-Person Issue & Loan Management  
+**Assigned Interns**: **Intern 3** (Catalog, Clean Barcodes & Student Profile Loan Tracking) & **Intern 4** (Dual-Mode AI Scanner & Coordinator Loan Management Console)  
+**Parent Pages**: `client/src/pages/InventoryPage.jsx`, `client/src/pages/ProfilePage.jsx`, `client/src/context/CartContext.jsx`
 
 ---
 
-## 🎯 Executive Overview & User Journey
+## 🎯 Executive Overview & Real-World Lab Workflow
 
-Group 2 builds the **smart laboratory hardware inventory system** for TechnoForum:
-1. Students and coordinators browse available hardware components (Arduino boards, extension cords, sensors, resistors) with **live stock status badges**.
-2. Each tracked piece of equipment has a **unique serial number** (e.g., `BIAS-EXT-001`, `BIAS-ARD-004`). Clicking any serial opens a **printable Code-128 linear barcode sticker** modal.
-3. Students can take a photo of their lab workbench and upload it to the **AI Vision Table Scanner**. Google Gemini Vision AI detects all components on the table and matches them to the catalog.
-4. Students add components to their **Issue Cart Drawer**, choose a return deadline (e.g. 7 days), enter their roll number, and submit a hardware loan request.
+Group 2 builds the **hardware borrowing and laboratory management engine** for TechnoForum. Instead of an automated e-commerce checkout, it reflects the **actual physical workflow of an engineering college laboratory**:
+
+```
+[1. Student Cart] ──> Submits Hardware Request (Items + purpose)
+                             │
+                             ▼
+[2. In-Person Lab Visit] ──> Student visits lab & meets Coordinator
+                             │
+                             ▼
+[3. Coordinator Portal] ──> Coordinator verifies hardware, assigns serials, sets 14-Day Deadline
+                             │
+                             ▼
+[4. Active Loan on Profile] ──> Student sees issued items, countdown, and "Request Extension" button
+                             │
+                             ▼
+[5. Return & Inspection] ──> Coordinator inspects parts:
+                             ├── All Working: Clicks "Confirm Return" -> Restores Stock
+                             └── Damaged/Missing: Adds red alert note (e.g. "Pin 13 burned")
+```
 
 ---
 
@@ -20,51 +34,52 @@ Group 2 builds the **smart laboratory hardware inventory system** for TechnoForu
 
 * **Assigned Branch**: `feat/intern3-catalog-barcodes`
 * **Owned Files**:
-  * `client/src/features/group2_inventory/InventoryItemCard.jsx` (Hardware Component Card)
-  * `client/src/features/group2_inventory/BarcodeModal.jsx` (Barcode & QR Sticker Generator)
-  * `server/src/utils/barcodeGenerator.js` (Backend Code-128 SVG & PNG Generator)
-  * `server/src/routes/inventory.routes.js` (Inventory REST Routes)
+  * `client/src/features/group2_inventory/InventoryItemCard.jsx` (Component Catalog Card)
+  * `client/src/features/group2_inventory/BarcodeModal.jsx` (Clean Item ID Barcode Generator)
+  * `client/src/features/group2_inventory/StudentLoansPanel.jsx` (Profile Hardware Loans Section)
+  * `server/src/routes/inventory.routes.js` (Inventory & Loan Routes)
 
-### 📌 Task 1.1: Hardware Component Card (`InventoryItemCard.jsx`)
-* **Objective**: Display an individual hardware item with visual stock status, tracked serial chips, and quantity selection.
-* **Component Props**:
-  * `item`: `{ id, name, category, quantityTotal, quantityAvailable, unit, serialPrefix, imageUrl, status, trackedSerials }`
-  * `onAddToCart`: `(item, quantity) => void`
-  * `onViewBarcode`: `(serialNumber) => void`
-* **Step-by-Step Implementation**:
-  1. **Stock Availability Badges**:
-     * `quantityAvailable > 5`: Green badge (`Available • X pcs left`) — `bg-emerald-950/60 text-emerald-400 border border-emerald-800`
-     * `1 <= quantityAvailable <= 5`: Amber badge (`Low Stock • X pcs left`) — `bg-amber-950/60 text-amber-400 border border-amber-800`
-     * `quantityAvailable === 0`: Red badge (`Out of Stock`) — `bg-rose-950/60 text-rose-400 border border-rose-800`
+### 📌 Task 1.1: Component Catalog Card (`InventoryItemCard.jsx`)
+* **Objective**: Display hardware with live stock badges, serial prefixes, and request selection.
+* **Component Specs**:
+  1. **Stock Indicators**:
+     * `Available`: Green badge (`> 5 pcs available`)
+     * `Low Stock`: Amber badge (`1 to 5 pcs left`)
+     * `Out of Stock`: Red badge (`0 pcs`, "Request" button disabled)
   2. **Tracked Serial Chips**:
-     * If `item.trackedSerials` has entries (e.g., extension cords `BIAS-EXT-001`, `BIAS-EXT-002`), render them as clickable monospace chips with a small `Barcode` icon.
-     * Clicking any serial chip invokes `onViewBarcode(serial)`.
-  3. **Interactive Cart Controls**:
-     * Quantity selector (`+` / `-` buttons, bounded between `1` and `quantityAvailable`).
-     * "Add to Issue Cart" button. Automatically disable with `opacity-50` when `quantityAvailable === 0`.
-* **Expected Output**: A cyber-themed hardware card displaying clear component details, active stock indicators, serial badges, and immediate cart interaction.
+     * Displays tracked unit prefixes (e.g. `BIAS-EXT-001`, `BIAS-ARD-004`).
+     * Clicking an Item ID / Serial opens its clean barcode label.
+  3. **"Add to Request Queue"**:
+     * Quantity stepper (`1` to available quantity). Adds item to student's pending issue request cart.
 
 ---
 
-### 📌 Task 1.2: Barcode & QR Sticker Generator (`BarcodeModal.jsx`)
-* **Objective**: Render a modal displaying a scannable linear Code-128 barcode and 2D QR code for physical equipment labeling.
-* **Step-by-Step Implementation**:
-  1. **Fetch Barcode Asset**:
-     * Call `GET /api/inventory/barcode/:serial` or use the client-side library `jsbarcode` / `react-barcode` / `qrcode.react`.
-  2. **Physical Label Layout**:
-     * Format the sticker preview to match standard physical 2" x 1" adhesive laboratory labels:
-       * Top: College Header `"BIAS TECHNOFORUM LAB"`
-       * Middle: Crisp Code-128 Barcode with human-readable serial text underneath (e.g. `BIAS-EXT-001`).
-       * Right side: 2D QR Code linking to `https://technoforum.edu/inventory?serial=BIAS-EXT-001`.
-  3. **1-Click Print Button**:
-     * Implement `window.print()` with CSS `@media print` rules that hide all background UI and print only the 2" x 1" barcode sticker.
-* **Expected Output**: A clean modal showing high-contrast, sharp vector barcode and QR code, with a functional "Print Sticker" button.
+### 📌 Task 1.2: Clean Item ID Barcode Label Generator (`BarcodeModal.jsx`)
+* **Objective**: A simplified, non-intrusive barcode tool for labeling lab hardware.
+* **Requirements**:
+  * Takes the unique **Item ID / Serial Number** (e.g., `TF-INV-001` or `BIAS-ARD-004`).
+  * Renders a clean 2" × 1" physical laboratory adhesive sticker:
+    * Top: `"BIAS TECHNOFORUM LAB"`
+    * Center: Sharp Code-128 linear barcode + human-readable Item ID underneath.
+    * 1-Click "Print Sticker" button formatted with `@media print`.
 
 ---
 
-### 🌟 Intern 3 Bonus / Add-On Enhancements (P1 Distinction)
-* **Bulk Barcode Sheet Export**: Add a button to export an A4 printable sheet (grid of 24 barcode stickers) for new batch lab equipment.
-* **Datasheet PDF Link**: Add a small "Datasheet ↗" link on components like Arduino and Sensors opening their official pinout PDF in a new tab.
+### 📌 Task 1.3: Student Profile Loan Dashboard (`StudentLoansPanel.jsx`)
+* **Objective**: Embedded in `ProfilePage.jsx` so students can track all their active and past hardware borrowings with 100% transparency.
+* **Displayed Information Per Borrowing**:
+  * **Component Names & Serials**: e.g. *Arduino Uno R3 (`BIAS-ARD-002`), Ultrasonic Sensor (`BIAS-SEN-005`)*.
+  * **Issue Date & Max 14-Day Deadline**: Countdown badge showing days remaining until the 14-day limit.
+  * **Status Badges**:
+    * `Requested` (Amber - awaiting in-person lab pickup)
+    * `Issued` (Emerald - active loan)
+    * `Pending Return` (Blue - student has submitted return request)
+    * `Returned` (Slate - completed)
+    * `Overdue` (Red pulse)
+  * **"Request Extension" Button**:
+    * Allows the student to submit a 7-day extension request with a brief explanation. Shows *"Extension Requested (Pending Coordinator Review)"*.
+  * **Damage / Loss Alert Note**:
+    * If the coordinator recorded damages, display a **prominent red callout box** with the coordinator's note.
 
 ---
 
@@ -72,119 +87,98 @@ Group 2 builds the **smart laboratory hardware inventory system** for TechnoForu
 
 * **Assigned Branch**: `feat/intern4-scanner-cart`
 * **Owned Files**:
-  * `client/src/features/group2_inventory/AiTableScannerModal.jsx` (AI Vision Table Scanner)
-  * `client/src/features/group2_inventory/IssueCartDrawer.jsx` (Slide-Out Hardware Cart)
-  * `server/src/controllers/inventory.controller.js` (Inventory Controller & Checkout Logic)
+  * `client/src/features/group2_inventory/AiTableScannerModal.jsx` (Dual-Mode Table Scanner)
+  * `client/src/features/group2_inventory/IssueRequestCartModal.jsx` (Student Issue Request Modal)
+  * `client/src/features/group2_inventory/CoordinatorLoanConsole.jsx` (Coordinator Loan Management)
+  * `server/src/controllers/inventory.controller.js` (Loan Lifecycles & Gemini Vision Logic)
 
-### 📌 Task 2.1: AI Vision Table Scanner (`AiTableScannerModal.jsx`)
-* **Objective**: Allow students or lab coordinators to upload a photo of a messy lab table and let AI identify all components.
-* **Step-by-Step Implementation**:
-  1. **Image Dropzone & Capture**:
-     * Drag-and-drop file uploader supporting PNG, JPG, and WEBP.
-     * Render instant image preview in the modal.
-  2. **API Connection (`POST /api/inventory/scan-ai`)**:
-     * Convert the image to Base64 and send to `POST /api/inventory/scan-ai`.
-     * Show a pulsing radar scan animation over the image while awaiting response.
-  3. **Detected Components Table**:
-     * Render the detected list returned by Google Gemini Vision:
-       * Component Name (e.g. `Arduino Uno`, `Jumper Wires`, `Ultrasonic Sensor`)
-       * Detected Quantity count
-       * Confidence Score percentage badge (`95% Match`)
-       * Matched Catalog Item ID
-  4. **Batch Add to Cart**:
-     * Provide an "Add All Detected Components to Cart" button that merges the scanned items directly into `CartContext`.
-* **Expected Output**: An AI-powered vision scanner modal with a scanning animation, confidence scores, and a 1-click button to populate the cart.
+### 📌 Task 2.1: Dual-Mode AI Vision Table Scanner (`AiTableScannerModal.jsx`)
+* **Objective**: Uses Google Gemini Vision AI to identify workbench components. Serves two specific users:
+  1. **Coordinators**: Point laptop/phone camera at the lab counter during in-person checkout to rapidly identify and log parts without typing.
+  2. **Students**: Upload workbench photos or turn on camera to discover component names, pinouts, and availability in the catalog.
+* **Dual-Mode Controls**:
+  * **Mode A: File Upload**: Drag-and-drop or gallery file picker (PNG, JPG, WEBP).
+  * **Mode B: Live Camera Toggle**: Real-time webcam video stream with a "Capture & Analyze" shutter button.
+* **Scan Results View**:
+  * Detected components list (Name, Count, Confidence percentage).
+  * "Add Detected Items to Request" button.
 
 ---
 
-### 📌 Task 2.2: Issue Cart Checkout Drawer (`IssueCartDrawer.jsx`)
-* **Objective**: A slide-out right drawer where students review selected equipment, set a return deadline, and complete checkout.
-* **Step-by-Step Implementation**:
-  1. **Slide-Out Transition**:
-     * Fixed right drawer with backdrop blur (`z-50 bg-[#0D1527] border-l border-brand-border`).
-  2. **Cart Item List**:
-     * List selected items with thumbnail, unit quantity stepper, remove button, and individual serial assignment.
-  3. **Return Deadline Presets**:
-     * Quick selection pills: `[3 Days]` | `[7 Days (Recommended)]` | `[14 Days]` | Custom Date Picker.
-  4. **Student Identification**:
-     * University Roll Number input (auto-filled if student is logged in).
-     * Terms acknowledgment checkbox: *"I agree to return hardware in working condition by the deadline."*
-  5. **Checkout Submission**:
-     * On submit, send `POST /api/inventory/checkout`:
-       ```json
-       {
-         "rollNumber": "230101",
-         "studentName": "Aarav Sharma",
-         "items": [
-           { "id": "inv-001", "quantity": 1, "serialNumber": "BIAS-ARD-001" },
-           { "id": "inv-002", "quantity": 1, "serialNumber": "BIAS-EXT-002" }
-         ],
-         "returnDeadline": "2026-12-02T18:00:00.000Z"
-       }
-       ```
-* **Expected Output**: A responsive drawer showing the item breakdown, return deadline calculator, and a clear confirmation receipt on successful checkout.
+### 📌 Task 2.2: Student Issue Request Modal (`IssueRequestCartModal.jsx`)
+* **Objective**: Where the student submits their list of requested components for in-person collection.
+* **Workflow**:
+  * Lists requested items and quantities.
+  * Auto-fills student Roll Number, Name, and Email if logged in (or allows guest entry).
+  * Notes field: *"Purpose of issue (e.g. Major Project, Hackathon prototype)"*.
+  * On submit, sets status to `Requested` and advises student: *"Please visit the Hardware Lab with your student ID to collect your components."*
 
 ---
 
-### 🌟 Intern 4 Bonus / Add-On Enhancements (P1 Distinction)
-* **Live Webcam Scanner**: Connect the laptop webcam so students can scan components or hold physical barcode stickers in front of the camera using `html5-qrcode` or `@zxing/library`.
-* **Student Quota Guard**: Display a warning badge if a student tries to add more than 3 active items simultaneously without returning previous issues.
+### 📌 Task 2.3: Coordinator Loan Management Console (`CoordinatorLoanConsole.jsx`)
+* **Objective**: The central management screen for lab coordinators to track and control all borrowings.
+* **Key Coordinator Actions**:
+  1. **Assign & Issue (In-Person Handover)**:
+     * When student arrives at the lab, coordinator views the request, scans or selects physical serials (`BIAS-ARD-001`), sets the **14-day deadline**, and clicks **"Confirm Issue"**.
+  2. **Review Extension Requests**:
+     * 1-click **"Approve Extension (+7 Days)"** or **"Reject Extension"**.
+  3. **Inspect & Confirm Return**:
+     * When student returns hardware, coordinator clicks **"Confirm Return"**, which automatically restores available stock in the catalog.
+  4. **Record Damaged / Missing Hardware**:
+     * If an item is damaged or missing, coordinator clicks *"Flag Damaged/Missing"*:
+       * Adds a **red alert remark** (e.g., *"Breadboard melted; 2 jumper wires missing"*).
+       * Marks status as `Damaged` or `Missing` so it stays permanently recorded on the student's profile without corrupting stock counts.
 
 ---
 
 ## 3. 📡 API Contract Reference
 
-### `GET /api/inventory/items`
-* **Response**:
-  ```json
-  {
-    "success": true,
-    "count": 4,
-    "items": [
-      {
-        "id": "inv-001",
-        "name": "Arduino Uno R3 Dev Board",
-        "category": "Microcontrollers",
-        "quantityTotal": 25,
-        "quantityAvailable": 18,
-        "unit": "pcs",
-        "serialPrefix": "BIAS-ARD",
-        "status": "available",
-        "trackedSerials": ["BIAS-ARD-001", "BIAS-ARD-002"]
-      }
-    ]
-  }
-  ```
-
-### `POST /api/inventory/scan-ai`
-* **Request Body**: `{ "imageBase64": "data:image/jpeg;base64,..." }`
-* **Response**:
-  ```json
-  {
-    "success": true,
-    "detectedItems": [
-      { "name": "Arduino Uno R3", "count": 2, "confidence": 0.96, "catalogId": "inv-001" },
-      { "name": "HC-SR04 Ultrasonic", "count": 1, "confidence": 0.92, "catalogId": "inv-003" }
-    ]
-  }
-  ```
-
-### `POST /api/inventory/checkout`
-* **Request Body**:
+### `POST /api/inventory/request-issue`
+* **Student submits request**:
   ```json
   {
     "rollNumber": "230101",
     "studentName": "Aarav Sharma",
-    "items": [{ "id": "inv-001", "quantity": 1, "serialNumber": "BIAS-ARD-001" }],
-    "returnDeadline": "2026-12-05T18:00:00Z"
+    "purpose": "Robotics Maze Solver Prototype",
+    "items": [
+      { "itemId": "inv-001", "quantity": 1 },
+      { "itemId": "inv-003", "quantity": 2 }
+    ]
   }
   ```
-* **Response**:
+
+### `PUT /api/inventory/loans/:id/assign` *(Coordinator Only)*
+* **Coordinator completes in-person handover**:
   ```json
   {
-    "success": true,
-    "message": "Equipment checkout successful. Transaction ID: TX-17956000",
-    "transactionId": "TX-17956000"
+    "assignedSerials": ["BIAS-ARD-001", "BIAS-SEN-004", "BIAS-SEN-005"],
+    "deadlineDays": 14
+  }
+  ```
+
+### `POST /api/inventory/loans/:id/extend` *(Student Only)*
+* **Student requests deadline extension**:
+  ```json
+  {
+    "reason": "Need 5 more days for final testing before evaluation."
+  }
+  ```
+
+### `PUT /api/inventory/loans/:id/return` *(Coordinator Only)*
+* **Coordinator signs off on return**:
+  ```json
+  {
+    "status": "returned",
+    "condition": "working",
+    "damageRemarks": null
+  }
+  ```
+* *If damaged:*
+  ```json
+  {
+    "status": "returned_damaged",
+    "condition": "damaged",
+    "damageRemarks": "Microcontroller USB-B port damaged by student."
   }
   ```
 
@@ -192,8 +186,9 @@ Group 2 builds the **smart laboratory hardware inventory system** for TechnoForu
 
 ## 4. 🧪 Local Testing & Verification Checklist
 
-1. [ ] Start dev servers via `npm run dev`.
-2. [ ] Open `http://localhost:5173/inventory`. Verify sample items (Arduino, Extension Cord, Sensors) render with proper stock badges.
-3. [ ] Click on a serial chip (e.g. `BIAS-EXT-001`). Verify barcode modal displays the Code-128 linear barcode.
-4. [ ] Click "Add to Issue Cart". Verify the cart badge in Navbar increments.
-5. [ ] Open the Issue Cart Drawer. Verify item quantity controls, return deadline selector, and successful checkout flow.
+1. [ ] Open `http://localhost:5173/inventory`. Add Arduino and Resistors to your request queue.
+2. [ ] Submit the request. Open `ProfilePage.jsx` and verify the borrowing appears under **Hardware Loans** as `Requested`.
+3. [ ] Log in as coordinator. In `CoordinatorLoanConsole`, view the pending request, assign serial `BIAS-ARD-001`, and click "Confirm Issue".
+4. [ ] In student profile, verify status changes to `Issued` with the active **14-day countdown**.
+5. [ ] Click "Request Extension". Verify coordinator sees the extension request and can approve/reject it.
+6. [ ] Test return flow: Coordinator signs off on return with a damage note and verifies stock restores correctly.
