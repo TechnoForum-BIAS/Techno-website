@@ -189,3 +189,15 @@ VALUES
 ('TF-2026-TH-001', 'Aarav Sharma', '230101', 'TechnoHacks 2026 Flagship Hackathon', 'First Runner Up', '2026-11-20'),
 ('TF-2026-RQ-042', 'Priya Verma', '230142', 'RoboQuest 2026 Autonomous Robotics', 'Participant', '2026-11-15')
 ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------
+-- 6. API ROLES PERMISSIONS (Required for Node.js backend access)
+-- ---------------------------------------------------------------------
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
