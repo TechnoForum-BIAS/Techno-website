@@ -288,3 +288,112 @@ To guarantee that all 6 interns can develop in parallel without merge conflicts,
    git push origin <your-branch-name>
    ```
 7. **Open a Pull Request on GitHub against `develop`** (Never create PRs against `main` directly).
+
+---
+
+## 7. 🛡️ Git Merge Conflict Prevention & Step-by-Step Resolution Guide
+
+Merge conflicts occur when two or more developers edit the exact same lines of code in the same file and Git cannot automatically decide which version to keep. Follow these guidelines to prevent and resolve them.
+
+### A. The 5 Golden Rules to Completely Avoid Conflicts
+1. **Never Touch Shared Core Files**:
+   Do NOT edit `App.jsx`, `Navbar.jsx`, `Footer.jsx`, `server/src/index.js`, or root `package.json`. Your subcomponents in `client/src/features/` are already wired into these files.
+2. **One Feature, One File**:
+   Interns work strictly within their assigned files listed in Section 3 (File Ownership Matrix). If Intern 1 is working on `EventCard.jsx`, Intern 2 must work on `EventRegistrationModal.jsx`.
+3. **Daily Sync First Thing in the Morning**:
+   Before writing any code, always sync your branch with `develop`:
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout <your-branch-name>
+   git merge develop
+   ```
+4. **Make Small, Atomic Commits**:
+   Do not accumulate 20 changes over 3 days without committing. Commit small, logical chunks (e.g. "feat: add date picker to registration modal").
+5. **Always Pull with Rebase Before Pushing**:
+   ```bash
+   git fetch origin
+   git rebase origin/develop
+   ```
+
+---
+
+### B. Step-by-Step: How to Solve a Merge Conflict When It Occurs
+
+If Git alerts you with `CONFLICT (content): Merge conflict in ...` during a `merge` or `rebase`, **do not panic**. Follow this 6-step protocol:
+
+#### Step 1: Identify Conflicted Files
+Run:
+```bash
+git status
+```
+Git will list conflicted files in red under `Unmerged paths:`, for example:
+```text
+both modified:   client/src/features/group1_events/EventCard.jsx
+```
+
+#### Step 2: Open the Conflicted File in VS Code
+Open the file. Git marks the collision with standard conflict markers:
+```javascript
+<<<<<<< HEAD (Current Change - Your Local Code)
+<button className="px-4 py-2 bg-brand-blue text-white rounded-xl">
+  Register for Event
+</button>
+=======
+<button className="px-4 py-2 bg-gradient-to-r from-brand-blue to-cyan-500 text-white rounded-xl font-bold">
+  Register Participation Now
+</button>
+>>>>>>> develop (Incoming Change - Remote Code)
+```
+
+#### Step 3: Choose the Correct Code
+In VS Code, you will see clickable buttons above the conflict:
+* **Accept Current Change**: Keeps your local code and discards incoming remote code.
+* **Accept Incoming Change**: Takes the remote code from `develop` and discards your local lines.
+* **Accept Both Changes**: Keeps both blocks sequentially.
+* **Manual Edit (Recommended)**: Delete the `<<<<<<<`, `=======`, and `>>>>>>>` lines manually and combine the best of both blocks into clean, valid code.
+
+#### Step 4: Verify that All Conflict Markers Are Gone
+Search your file for `<<<<<<<`. If any markers remain, the code will fail to compile.
+
+#### Step 5: Stage the Resolved Files
+```bash
+git add client/src/features/group1_events/EventCard.jsx
+```
+
+#### Step 6: Complete the Merge or Rebase
+* If you were in a **rebase** (`git rebase origin/develop`):
+  ```bash
+  git rebase --continue
+  ```
+  *(Repeat Steps 2–5 if multiple commits had conflicts until Git says `Successfully rebased`).*
+* If you were in a **merge** (`git merge develop`):
+  ```bash
+  git commit -m "merge: resolve conflicts with develop"
+  ```
+
+#### 🚨 Emergency Escape Hatch: If You Get Stuck or Made a Mistake
+If you make an error while resolving conflicts and want to safely return your repository to the exact state it was before you started:
+```bash
+# If rebasing:
+git rebase --abort
+
+# If merging:
+git merge --abort
+```
+This cancels the operation and returns your repository to a clean state without losing any of your previously committed code!
+
+---
+
+## 8. 🛠️ Comprehensive Engineering Troubleshooting Guide (All Known Errors & Fixes)
+
+| Error / Issue | Root Cause | Exact Solution |
+| :--- | :--- | :--- |
+| **`npm : File ... npm.ps1 cannot be loaded because running scripts is disabled`** | Windows PowerShell security execution policy blocks script execution. | Run PowerShell as Administrator or run: <br>`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`<br>Or run commands with `npm.cmd` instead of `npm`. |
+| **`error: Your local changes to the following files would be overwritten by merge/checkout`** | You modified local files without committing or stashing before pulling. | Run:<br>`git stash`<br>`git pull origin develop`<br>`git stash pop` |
+| **`fatal: refusing to merge unrelated histories`** | Remote branch and local branch were created independently with different commit trees. | Run:<br>`git pull origin develop --allow-unrelated-histories` |
+| **`Error: listen EADDRINUSE: address already in use :::5000` or `:::5173`** | An old Node.js or Vite process is still running in the background and holding the port. | **Windows (PowerShell)**:<br>`netstat -ano \| findstr :5000`<br>`taskkill /PID <PID_NUMBER> /F`<br>**Mac / Linux**:<br>`kill -9 $(lsof -t -i:5000)` |
+| **`Cannot find module 'lucide-react'` or missing dependencies** | Dependencies were not installed in both client and server directories. | Run from the repository root:<br>`npm run install:all`<br>This automatically runs `npm install` across root, `client/`, and `server/`. |
+| **`fetch('/api/...') returns 404 Not Found` or `ECONNREFUSED`** | The Express backend server is not running on port 5000. | Start the server in a separate terminal: <br>`npm run server`<br>Or start both concurrently: `npm run dev`. |
+| **Supabase or Brevo API keys missing in `.env`** | You do not have access to live cloud keys yet. | **Do NOT worry!** The platform has an automatic in-memory mock engine. It seamlessly provides mock events, mock inventory, and mock notices with zero cloud dependencies so you can build and test your frontend features immediately. |
+| **`npm run build` fails with `Failed to resolve import`** | Case-sensitivity typo in a component file path (e.g. `eventCard.jsx` vs `EventCard.jsx`). | Git on Windows is case-insensitive, but Linux production environments are case-sensitive. Always verify exact file casing matching the filesystem. |
