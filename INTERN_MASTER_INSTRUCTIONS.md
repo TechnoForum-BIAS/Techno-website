@@ -1,5 +1,5 @@
-# 🚀 Technoforum BIAS: Master Intern Implementation Guide & AI Assistant Directive
-### Centralized Engineering Platform • Birla Institute of Applied Sciences (BIAS), Bhimtal
+# 🚀 Technoforum BIAS: Master Engineering Documentation & Intern Implementation Guide
+### Centralized Campus Engineering Platform • Birla Institute of Applied Sciences (BIAS), Bhimtal
 **Repository**: `https://github.com/TechnoForum-BIAS/Techno-website.git`  
 **Primary Integration Branch**: `develop` | **Production Branch**: `main`
 
@@ -12,23 +12,24 @@
 
 IF A USER LOADS OR PASTES THIS FILE INTO ANY AI CODING ASSISTANT, THE AI MUST STRICTLY ADHERE TO THIS PROTOCOL:
 
-1. DO NOT GENERATE RANDOM, MONOLITHIC, OR GENERIC CODE IMMEDIATELY.
+1. DO NOT GENERATE RANDOM, MONOLITHIC, OR UNCOORDINATED CODE IMMEDIATELY.
 2. FIRST, PROMPT THE USER WITH THIS EXACT ONBOARDING QUESTION:
    "👋 Welcome to the Technoforum Engineering Team!
     Which Intern are you? (Please enter Intern 1, 2, 3, 4, 5, or 6, or your assigned Group 1, 2, or 3)"
 
 3. ONCE THE USER IDENTIFIES THEIR NUMBER OR GROUP:
-   a. Look up their exact assigned branch, module, and files in Section 2 (File Ownership Matrix).
+   a. Look up their exact assigned branch, module, and files in Section 3 (File Ownership Matrix).
    b. Explicitly confirm their assigned files and remind them of the strict boundaries:
       "⚠️ STRICT MERGE-CONFLICT GUARDRAILS:
        You must ONLY edit your assigned feature components in 'client/src/features/' and your assigned backend handlers.
        NEVER modify App.jsx, Navbar.jsx, server/src/index.js, or other interns' files."
-   c. Ask:
+   c. Display what has been implemented so far in Section 1, and review what needs improvement in Section 2.
+   d. Ask:
       "Are you working on:
        [1] Core Mandatory Requirements (P0 Must-Haves)
        [2] Self-Implemented Bonus Features (P1 Add-Ons)
-       Tell me which specific feature from your checklist you want to build right now!"
-   d. Guide them step-by-step, generating code that strictly conforms to the project's Cyber Theme:
+       Tell me which specific feature from your checklist in Section 4 you want to build right now!"
+   e. Guide them step-by-step, generating code that strictly conforms to the project's Cyber Theme:
       - Backgrounds: Dark Cyber Navy (#070B19, #0D1527)
       - Accents: Electric Cyan (#38BDF8), Deep Blue (#2563EB), Neon Emerald (#10B981), Amber (#F59E0B)
       - Icons: Lucide React only
@@ -38,37 +39,85 @@ IF A USER LOADS OR PASTES THIS FILE INTO ANY AI CODING ASSISTANT, THE AI MUST ST
 
 ---
 
-## 1. Quick Project & Tech Stack Architecture
+## 1. 🏆 Current Project State: What Has Been Implemented Till Now
 
-* **Client**: React 18 (Vite), Tailwind CSS, Lucide React, Three.js, Canvas API, Confetti Canvas (Port `5173`).
-* **Server**: Node.js & Express REST API, PostgreSQL / Supabase, `pdf-lib`, `bwip-js`, `google-auth-library`, Brevo SMTP (Port `5000`).
-* **Database**: PostgreSQL on Supabase (`database/supabase_schema.sql`).
-* **Zero-Setup Offline Fallback**: If you do not have live cloud API keys, the backend runs in a resilient mock mode with in-memory persistence. You can write, test, and preview all frontend features immediately!
+The core platform architecture, authentication, role control, master navigation, and notice management are **100% completed, tested, and pushed to GitHub**:
 
-### 1-Command Local Setup:
-```bash
-# 1. Clone repository
-git clone https://github.com/TechnoForum-BIAS/Techno-website.git
-cd Techno-website
+### A. Authentication & Role-Based Access Control (RBAC)
+* **Google OAuth & Native Credentials**: Verified authentication via Google Identity Services (`google-auth-library`) and JWT sessions.
+* **Student Default Guardrail**: All new public sign-ups and Google OAuth logins strictly default to `user` (Student Member). No public role selection exists on login/signup screens.
+* **Super Admin Account**: `techno_forum@birlainstitute.co.in` is the official master admin pre-seeded in the database with role `admin`.
+* **Administrative Role Manager (`/admin/users`)**: Dedicated management dashboard for the Super Admin to search any user by name/email, view sign-in history, and assign roles (`user`, `coordinator`, `admin`) via live dropdowns with protection preventing self-demotion.
 
-# 2. Switch to the develop integration branch
-git checkout develop
+### B. Amazon-Style Dual-Tier Navigation Bar (`Navbar.jsx`)
+* **Row 1 (Utility Bar)**:
+  * Institute Branding (`TECHNOFORUM BIAS`) linking to `/`.
+  * Campus Status Indicator: `📍 BIAS Campus • Lab Open 9AM–8PM` with live green pulse.
+  * Real Full-Width Search Bar with `Ctrl + K` / `⌘K` Spotlight Command Palette (`CommandPalette.jsx`) that searches events, hardware components, roll numbers, and quick actions.
+  * Campus Notifications Bell (`NotificationCenter.jsx`) with live unread badge for circulars and loan return deadlines.
+  * Amazon-style **Account & Access** Dropdown:
+    * *Logged Out*: High-contrast Sign-In CTA + quick visitor links.
+    * *Logged In*: 2-column layout showing "Your Activity" (loans, registrations, certs) and "Account & Tools" (dashboard, role management, cert studio, sign out).
+  * Conditional **Inventory** Shortcut: Only visible after user logs in; hidden on the main landing page for visitors.
+* **Row 2 (Sub-Navigation Bar)**:
+  * **100% Direct Single-Click Navigation**: Zero annoying popup dropdowns!
+  * `All Events` (`/events`)
+  * `Hardware Lab` (`/inventory`)
+  * `Notices` (`/announcements`)
+  * `Verify Certificate` (`/certificates/verify`)
+  * `Certificate Studio` (`/certificates/studio`) *(Coordinators & Admins)*
+  * `Manage Users & Roles` (`/admin/users`) *(Super Admin)*
 
-# 3. Switch to your team's assigned branch
-# Group 1: git checkout feat/g1-landing-events
-# Group 2: git checkout feat/g2-inventory-scanner
-# Group 3: git checkout feat/g3-certificates-studio
+### C. Full Notice & Announcement Management System (CRUD)
+* **Full RESTful API**:
+  * `GET /api/announcements`: Publicly accessible with or without login.
+  * `POST /api/announcements`: Protected by `verifyToken` and `requireRole('coordinator', 'admin')`.
+  * `PUT /api/announcements/:id`: Update existing notice.
+  * `DELETE /api/announcements/:id`: Delete notice.
+* **Professional Notice Fields (`NoticeModal.jsx`)**:
+  * Title, Category dropdown (Academic Circular, Hackathons, Hardware Lab, Recruitment, Urgent), Priority (Normal, High, Urgent), Calendar Date selection (`<input type="date" />`), Publish Time, Target Audience, Description, Pin to Top toggle, Flyer URL.
+* **Integrated Everywhere**:
+  * **Main Landing Page (`HomePage.jsx`)**: Dedicated "Latest Campus Notices & Circulars" bulletin.
+  * **Full Notice Board (`AnnouncementsPage.jsx`)**: Live search, category filter pills, Edit & Delete buttons for coordinators/admins.
+  * **User Profile (`ProfilePage.jsx`)**: Circulars card embedded in every user profile dashboard.
 
-# 4. Install dependencies and start client + server concurrently
-npm run install:all
-npm run dev
-```
+### D. Dynamic Role-Adaptive Profile Page (`ProfilePage.jsx`)
+* **Student View (`user`)**: Hardware borrowed tracker (serials, return deadlines, active status), registered events, verified credentials, and campus circulars.
+* **Coordinator View (`coordinator`)**: Campus hardware loans audit tracker, audit return inspector, quick event/flyer actions, and notice broadcaster.
+* **Super Admin View (`admin`)**: Official Platform Root Console banner, system-wide metrics, direct button to Supabase Cloud, and shortcut to `/admin/users`.
+
+### E. Zero-Merge-Conflict Modular Subcomponents (`client/src/features/`)
+* Decomposed monolithic pages into 10 isolated feature files assigned 1:1 to intern ownership.
 
 ---
 
-## 2. File Ownership Matrix (Zero Merge Conflicts)
+## 2. ⚠️ What Needs Improvement (Known Engineering Gaps & Opportunities)
 
-To guarantee that all 6 interns can develop in parallel without encountering git merge conflicts, **each intern is assigned isolated subcomponent files**. The main parent pages (`EventsPage.jsx`, `InventoryPage.jsx`, `CertificateStudioPage.jsx`) simply render these subcomponents as containers.
+While the core platform is stable and fully functional, the following areas have been identified for interns to refine and enhance:
+
+1. **Duplicate Registration & Checkout Guards**:
+   * *Gap*: An event registration can currently be submitted multiple times with the same roll number.
+   * *Improvement*: Check if a student roll number is already registered for that `eventId` and show a "Already Registered" badge.
+   * *Gap*: An individual serial (e.g. `BIAS-EXT-001`) can theoretically be added to cart even if already issued to another student.
+   * *Improvement*: Validate that `trackedSerials` are verified against active transactions in `POST /api/inventory/checkout`.
+2. **AI Vision Table Scanner Live Viewfinder**:
+   * *Gap*: The scanner modal currently accepts file uploads and photo drag-and-drop.
+   * *Improvement*: Connect the device webcam using the HTML5 `navigator.mediaDevices.getUserMedia` API so students can hold components directly in front of their laptop camera.
+3. **Automated Brevo SMTP Notifications**:
+   * *Gap*: Transactions and registrations are logged in the database, but email confirmations are not dispatched automatically.
+   * *Improvement*: Trigger automated confirmation emails with QR passes when an event is registered or hardware is issued.
+4. **Certificate Canvas Coordinate Scaling**:
+   * *Gap*: Non-standard certificate dimensions (e.g. custom square templates) need proportional vector coordinate scaling when rendering in `pdf-lib`.
+   * *Improvement*: Implement scale ratio normalization: $\text{scaleX} = \frac{\text{pdfWidth}}{\text{canvasWidth}}$, $\text{scaleY} = \frac{\text{pdfHeight}}{\text{canvasHeight}}$.
+5. **Mobile Viewport Optimization on Heavy Modals**:
+   * *Gap*: The Canvas Coordinate Editor and Barcode Sticker layout require horizontal scrolling on narrow smartphone screens.
+   * *Improvement*: Add responsive touch controls and zoom presets for mobile screen sizes.
+
+---
+
+## 3. Strict File Ownership Matrix (Zero Merge Conflicts)
+
+To guarantee that all 6 interns can develop in parallel without merge conflicts, **you must strictly modify only your assigned files**:
 
 | Intern | Group | Assigned Git Branch | Assigned Frontend Files | Assigned Backend Files |
 | :--- | :--- | :--- | :--- | :--- |
@@ -86,178 +135,93 @@ To guarantee that all 6 interns can develop in parallel without encountering git
 
 ---
 
-## 3. Deep Dive: Group 1 — Landing Experience, Events & Notices
+## 4. Detailed Task Roadmaps per Intern
+
+### 👥 Group 1: Landing Experience, Events & Announcements
 **Git Branch**: `feat/g1-landing-events`  
 **Team**: Intern 1 & Intern 2
 
-### 📌 Intern 1 Ownership & Tasks
-* **Files**: `client/src/components/Hero3D.jsx`, `client/src/features/group1_events/EventCard.jsx`, `server/src/routes/events.routes.js`
+#### 📌 Intern 1 Tasks (3D Visuals & Dynamic Event Cards)
+* **Assigned Files**: `client/src/components/Hero3D.jsx`, `client/src/features/group1_events/EventCard.jsx`, `server/src/routes/events.routes.js`
+* **Must-Have Tasks (P0)**:
+  - [ ] **Task 1.1**: Refine `Hero3D.jsx` using Three.js with an interactive glowing geometric wireframe (Icosahedron/Torus Knot in `#38BDF8` cyan and `#2563EB` blue) that reacts smoothly to cursor tilt.
+  - [ ] **Task 1.2**: In `EventCard.jsx`, display Category Badges with distinctive cyber colors (Hackathon: cyan, Robotics: purple, Workshop: blue, Coding: green).
+  - [ ] **Task 1.3**: Display formatted event Date, Time, Venue, and Capacity metrics. Connect the "Register Participation" trigger button to `onRegister(event)`.
+* **Add-On Tasks (P1 Bonus Ideas)**:
+  - [ ] **Add-On 1.1**: Build a live ticking `DD : HH : MM : SS` countdown badge for upcoming flagship hackathons.
+  - [ ] **Add-On 1.2**: Add 1-click Google Calendar / `.ics` export with pre-filled title and venue.
+  - [ ] **Add-On 1.3**: Add a quick WhatsApp / Social share button with pre-filled event summary.
 
-#### ✅ Core Mandatory Requirements (P0 Must-Haves):
-1. **Interactive 3D Visual Hero (`Hero3D.jsx`)**:
-   - Initialize a Three.js scene featuring a glowing geometric wireframe mesh (Icosahedron / Torus Knot) rendered in `#38BDF8` cyan and `#2563EB` blue.
-   - Implement mouse move listener: tilt and rotate the mesh smoothly towards the cursor position with damping.
-   - Performance guard: auto-pause the animation loop when the canvas is scrolled out of viewport using `IntersectionObserver`.
-2. **Dynamic Event Card (`EventCard.jsx`)**:
-   - Receive `event` object and `onRegister` callback as props.
-   - Render Category Badges with distinctive cyber colors:
-     - *Hackathon*: Cyan pill (`bg-cyan-950/60 text-cyan-400 border border-cyan-800`)
-     - *Robotics*: Purple pill (`bg-purple-950/60 text-purple-400 border border-purple-800`)
-     - *Workshop*: Blue pill (`bg-blue-950/60 text-blue-400 border border-blue-800`)
-     - *Coding*: Emerald pill (`bg-emerald-950/60 text-emerald-400 border border-emerald-800`)
-   - Display formatted Date, Time, Venue, and Capacity metrics.
-   - Status badge: `upcoming` (green glow) vs `completed` (dimmed slate).
-   - "Register Participation" trigger button that executes `onRegister(event)`.
-
-#### 💡 Self-Implemented Add-On Features (P1 Bonus Ideas):
-* **Add-On 1.1: Live Countdown Timer**: Render a ticking `DD : HH : MM : SS` countdown badge on upcoming flagship events.
-* **Add-On 1.2: Add to Calendar Button**: Generate a `.ics` calendar invite or 1-click Google Calendar link with event title, venue, and description.
-* **Add-On 1.3: Event Social Share Pill**: Quick copy-link or WhatsApp share button with pre-filled event summary.
+#### 📌 Intern 2 Tasks (Registration Form & Society Notices)
+* **Assigned Files**: `client/src/features/group1_events/EventRegistrationModal.jsx`, `client/src/pages/AnnouncementsPage.jsx`, `server/src/controllers/events.controller.js`
+* **Must-Have Tasks (P0)**:
+  - [ ] **Task 2.1**: In `EventRegistrationModal.jsx`, validate inputs (Roll Number format `230101`, College Email, WhatsApp number, and team member chips).
+  - [ ] **Task 2.2**: Auto-fill student profile data if logged in (`user.name`, `user.rollNumber`, `user.email`).
+  - [ ] **Task 2.3**: Connect submission to `POST /api/events/register` with animated checkmark confirmation.
+  - [ ] **Task 2.4**: Connect `AnnouncementsPage.jsx` to `GET /api/announcements` and ensure circular flyer preview modals open with zoom view.
+* **Add-On Tasks (P1 Bonus Ideas)**:
+  - [ ] **Add-On 2.1**: Generate a downloadable digital event entry pass with student roll number, event title, and generated QR code.
+  - [ ] **Add-On 2.2**: Implement duplicate registration prevention by checking if the roll number is already registered.
 
 ---
 
-### 📌 Intern 2 Ownership & Tasks
-* **Files**: `client/src/features/group1_events/EventRegistrationModal.jsx`, `client/src/pages/AnnouncementsPage.jsx`, `server/src/controllers/events.controller.js`
-
-#### ✅ Core Mandatory Requirements (P0 Must-Haves):
-1. **Event Registration Engine (`EventRegistrationModal.jsx`)**:
-   - Controlled modal overlay triggered when user clicks "Register" on any event.
-   - Auto-fill student profile data if logged in (`user.name`, `user.rollNumber`, `user.email`).
-   - Required input fields:
-     - Student Full Name (`string`, required)
-     - University Roll Number (`string`, required, validated against BIAS format `e.g. 230101`)
-     - College Email (`email`, required)
-     - WhatsApp Phone Number (`tel`, 10 digits required)
-     - Team Size / Member Names (`textarea` or tag chips for hackathons)
-   - Connect submit handler to `POST /api/events/register`. Show animated spinner during fetch, followed by a checkmark confirmation screen.
-2. **Society Circulars & Notices (`AnnouncementsPage.jsx`)**:
-   - Fetch announcements from `GET /api/announcements`.
-   - Render notice cards showing:
-     - Notice Title, Date published, Priority tag (`CRITICAL`, `ACADEMIC`, `CLUB`).
-     - Image flyer preview with full-screen zoom preview modal.
-     - "Download Official Circular (PDF/Image)" direct link.
-
-#### 💡 Self-Implemented Add-On Features (P1 Bonus Ideas):
-* **Add-On 2.1: Digital Event Pass Generator**: On successful registration, render a downloadable digital ticket with student roll number, event title, and generated QR code pass.
-* **Add-On 2.2: Duplicate Registration Guard**: Check if student roll number is already registered for this event; if so, show a warning badge instead of submitting duplicate entries.
-* **Add-On 2.3: Notice Filter by Priority**: Add quick filter pills (`All`, `Urgent`, `Workshops`, `Notices`) on `AnnouncementsPage.jsx`.
-
----
-
-## 4. Deep Dive: Group 2 — Smart Hardware Inventory & AI Vision Scanner
+### 👥 Group 2: Smart Hardware Inventory & AI Vision Scanner
 **Git Branch**: `feat/g2-inventory-scanner`  
 **Team**: Intern 3 & Intern 4
 
-### 📌 Intern 3 Ownership & Tasks
-* **Files**: `client/src/features/group2_inventory/InventoryItemCard.jsx`, `client/src/features/group2_inventory/BarcodeModal.jsx`, `server/src/utils/barcodeGenerator.js`
+#### 📌 Intern 3 Tasks (Hardware Catalog & Physical Barcode Labels)
+* **Assigned Files**: `client/src/features/group2_inventory/InventoryItemCard.jsx`, `client/src/features/group2_inventory/BarcodeModal.jsx`, `server/src/utils/barcodeGenerator.js`
+* **Must-Have Tasks (P0)**:
+  - [ ] **Task 3.1**: In `InventoryItemCard.jsx`, display stock availability badges (`Available`, `Low Stock: X left`, `Out of Stock`), tracked unique serial chips (e.g. `BIAS-EXT-001`, `BIAS-ARD-004`), and "Add to Issue Cart" button.
+  - [ ] **Task 3.2**: In `BarcodeModal.jsx`, render Code-128 linear barcode and 2D QR generator via `server/src/utils/barcodeGenerator.js`.
+  - [ ] **Task 3.3**: Configure "Print Adhesive Label" button with CSS `@media print` formatted for physical 2" x 1" equipment stickers.
+* **Add-On Tasks (P1 Bonus Ideas)**:
+  - [ ] **Add-On 3.1**: Add a button that generates a printable A4 PDF sheet of 24 barcode stickers for batch labeling lab drawers.
+  - [ ] **Add-On 3.2**: Add an external datasheet URL link (e.g. Arduino pinout PDF, sensor specs) inside the item card.
 
-#### ✅ Core Mandatory Requirements (P0 Must-Haves):
-1. **Hardware Catalog Component Card (`InventoryItemCard.jsx`)**:
-   - Receive `item`, `onAddToCart`, and `onViewBarcode` props.
-   - Display stock availability badges:
-     - Stock > 5: Green badge (`Available`)
-     - 1 ≤ Stock ≤ 5: Amber badge (`Low Stock: X units left`)
-     - Stock = 0: Red badge (`Out of Stock`, disabled cart button)
-   - Render tracked individual serial chips (e.g. `BIAS-EXT-001`, `BIAS-EXT-002`, `BIAS-ARD-004`). Clicking any chip opens its barcode modal.
-   - "Add to Issue Cart" button with quantity selector.
-2. **Barcode & QR Modal Generator (`BarcodeModal.jsx`)**:
-   - Modal displaying the generated Code-128 linear barcode and 2D QR code for a given serial number.
-   - Fetch or render barcode from `GET /api/inventory/barcode/:serial`.
-   - "Print Adhesive Sticker" button with CSS `@media print` styling configured for standard 2" x 1" physical lab inventory labels.
-
-#### 💡 Self-Implemented Add-On Features (P1 Bonus Ideas):
-* **Add-On 3.1: Bulk Barcode Sheet Export**: Button that generates a printable A4 grid of 24 barcode stickers for batch labeling lab drawers.
-* **Add-On 3.2: Component Datasheet Quick Link**: Add an external datasheet URL link (e.g. Arduino pinout PDF, sensor specs) inside the item card.
-* **Add-On 3.3: Low Stock Restock Request**: For coordinators/admins, show a 1-click "Request Restock" button that logs a replenishment ticket.
-
----
-
-### 📌 Intern 4 Ownership & Tasks
-* **Files**: `client/src/features/group2_inventory/AiTableScannerModal.jsx`, `client/src/features/group2_inventory/IssueCartDrawer.jsx`, `server/src/controllers/inventory.controller.js`
-
-#### ✅ Core Mandatory Requirements (P0 Must-Haves):
-1. **AI Vision Table Scanner (`AiTableScannerModal.jsx`)**:
-   - Photo upload and drag-and-drop zone for lab table photos containing electronic components.
-   - Connect to `POST /api/inventory/scan-ai`. Send image payload to Google Gemini Vision AI (`gemini-2.5-flash`).
-   - Parse AI structured response and display detected components table:
-     - Component Name (e.g. *HC-SR04 Ultrasonic Sensor*, *Resistors 10kΩ*, *Arduino Uno*)
-     - Detected Count / Quantity
-     - Confidence Score badge
-     - Matched Inventory Catalog ID
-   - "Add All Detected Components to Cart" 1-click batch button.
-2. **Issue Cart Checkout Drawer (`IssueCartDrawer.jsx`)**:
-   - Slide-out right-side drawer listing selected equipment.
-   - Quantity increment/decrement buttons with stock maximum ceiling.
-   - Return Deadline Selector: quick presets (`3 Days`, `7 Days`, `14 Days` or Custom Date Picker).
-   - University Roll Number verification input.
-   - "Confirm Checkout" button triggering `POST /api/inventory/checkout`.
-
-#### 💡 Self-Implemented Add-On Features (P1 Bonus Ideas):
-* **Add-On 4.1: Live Webcam Scanner**: Enable live video feed from laptop webcam so students can place components directly in front of camera without taking manual photos.
-* **Add-On 4.2: Barcode Camera Reader**: Use HTML5 camera scanner to scan physical barcode stickers directly into the issue cart.
-* **Add-On 4.3: Return Overdue Fine Calculator**: In coordinator view, calculate automated late return warnings based on return deadline dates.
+#### 📌 Intern 4 Tasks (AI Table Scanner & Hardware Loan Cart)
+* **Assigned Files**: `client/src/features/group2_inventory/AiTableScannerModal.jsx`, `client/src/features/group2_inventory/IssueCartDrawer.jsx`, `server/src/controllers/inventory.controller.js`
+* **Must-Have Tasks (P0)**:
+  - [ ] **Task 4.1**: In `AiTableScannerModal.jsx`, build photo upload and drag-and-drop zone connected to `POST /api/inventory/scan-ai` (Google Gemini Vision AI).
+  - [ ] **Task 4.2**: Parse detected components table (Component Name, Count, Confidence Score, Matched Catalog ID) and provide an "Add All Detected Components to Cart" button.
+  - [ ] **Task 4.3**: In `IssueCartDrawer.jsx`, build quantity controls, return deadline selector (`3 Days`, `7 Days`, `14 Days`), student roll number verification, and checkout API trigger (`POST /api/inventory/checkout`).
+* **Add-On Tasks (P1 Bonus Ideas)**:
+  - [ ] **Add-On 4.1**: Connect laptop webcam video feed so students can show components directly to camera.
+  - [ ] **Add-On 4.2**: Use HTML5 camera barcode scanner to scan physical barcode stickers directly into the issue cart.
+  - [ ] **Add-On 4.3**: Calculate automated late return warning badges in coordinator view.
 
 ---
 
-## 5. Deep Dive: Group 3 — E-Certificate Studio & Verification Hub
+### 👥 Group 3: E-Certificate Studio & Verification Hub
 **Git Branch**: `feat/g3-certificates-studio`  
 **Team**: Intern 5 & Intern 6
 
-### 📌 Intern 5 Ownership & Tasks
-* **Files**: `client/src/features/group3_certificates/TemplateUploader.jsx`, `client/src/features/group3_certificates/CsvRosterUploader.jsx`, `server/src/routes/certificates.routes.js`
+#### 📌 Intern 5 Tasks (Certificate Template Ingestion & CSV Parser)
+* **Assigned Files**: `client/src/features/group3_certificates/TemplateUploader.jsx`, `client/src/features/group3_certificates/CsvRosterUploader.jsx`, `server/src/routes/certificates.routes.js`
+* **Must-Have Tasks (P0)**:
+  - [ ] **Task 5.1**: In `TemplateUploader.jsx`, build drag-and-drop PNG/PDF certificate template upload with automatic dimension detection (e.g. `1920x1080` or A4 landscape `842x595`) and high-res preview canvas.
+  - [ ] **Task 5.2**: In `CsvRosterUploader.jsx`, parse `.csv`/`.xlsx` participant sheets (`Name`, `RollNumber`, `Event`, `Position`, `Date`) using `PapaParse` and display a 5-row preview table with participant counts.
+  - [ ] **Task 5.3**: Extract and provide detected CSV column headers to the placeholder mapper.
+* **Add-On Tasks (P1 Bonus Ideas)**:
+  - [ ] **Add-On 5.1**: Automatically detect common column synonyms (e.g. `Full Name`, `Student_Name` -> `{Name}`).
+  - [ ] **Add-On 5.2**: Allow correcting typos in student names directly in the preview table before generating PDFs.
 
-#### ✅ Core Mandatory Requirements (P0 Must-Haves):
-1. **Certificate Template Ingestion (`TemplateUploader.jsx`)**:
-   - Drag-and-drop file upload for high-res PNG or PDF certificate templates.
-   - Client-side image dimension detection (calculates pixel width & height, e.g. `1920 x 1080` or A4 landscape `842 x 595`).
-   - High-definition template preview canvas with zoom controls.
-   - Pass template file and dimensions up to parent state (`CertificateStudioPage.jsx`).
-2. **CSV Participant Roster Parser (`CsvRosterUploader.jsx`)**:
-   - Ingestion of `.csv` or `.xlsx` event participant files.
-   - Parse CSV rows in real-time using `PapaParse` or built-in parser.
-   - Extract column headers (e.g. `Name`, `RollNumber`, `Event`, `Position`, `Date`, `Email`).
-   - Render a data preview table showing the first 5 parsed student rows with row counter badge (`Total Participants: 142`).
-   - Provide available placeholder tags to the coordinate editor.
-
-#### 💡 Self-Implemented Add-On Features (P1 Bonus Ideas):
-* **Add-On 5.1: CSV Column Auto-Mapper**: Automatically detect common column synonyms (e.g. `Full Name`, `Student_Name` -> `{Name}`).
-* **Add-On 5.2: In-Browser Row Editor**: Allow correcting typos in student names directly in the preview table before generating PDFs.
-* **Add-On 5.3: Duplicate Roll Number Checker**: Flag duplicate entries in CSV with a warning pill.
-
----
-
-### 📌 Intern 6 Ownership & Tasks
-* **Files**: `client/src/features/group3_certificates/CanvasCoordinateEditor.jsx`, `client/src/features/group3_certificates/BatchZipGenerator.jsx`, `client/src/pages/CertificateVerifyPage.jsx`, `server/src/utils/pdfGenerator.js`
-
-#### ✅ Core Mandatory Requirements (P0 Must-Haves):
-1. **Visual Canvas Coordinate Editor (`CanvasCoordinateEditor.jsx`)**:
-   - Visual interactive workspace rendering the uploaded certificate template.
-   - Draggable text placeholder badges: `{Name}`, `{RollNumber}`, `{Event}`, `{Position}`, `{Date}`, `{CertificateId}`.
-   - Styling controls per placeholder:
-     - Font Size (slider `12px` to `72px`)
-     - Font Color picker (Hex code input + palette)
-     - Text Alignment (Left, Center, Right)
-   - Real-time coordinate readout `(X, Y)` updating on drag or manual coordinate nudge arrows.
-2. **Vector PDF-Lib Engine & ZIP Streamer (`pdfGenerator.js` & `BatchZipGenerator.jsx`)**:
-   - Convert Web Canvas top-left coordinates `(0, 0)` to PDF-Lib bottom-left vector space:
-     $$\text{pdfY} = \text{templateHeight} - \text{canvasY} - \text{fontSize}$$
-   - Generate unique cryptographic certificate ID for each student: `TF-2026-XXXXXX`.
-   - Call `POST /api/certificates/generate-batch` to generate individual PDFs and stream a combined `.zip` file.
-   - Progress bar showing generation progress (`Generated 45 / 150...`).
-3. **Public Certificate Verification Portal (`CertificateVerifyPage.jsx`)**:
-   - Search bar accepting `Certificate ID` (e.g. `TF-2026-981245`) or `University Roll Number`.
-   - Query `GET /api/certificates/verify?query=:id`.
-   - Render official verified certificate badge with student name, event, issue date, and institute authenticity seal.
-   - Fire celebratory confetti canvas (`canvas-confetti`) when a genuine certificate is verified!
-
-#### 💡 Self-Implemented Add-On Features (P1 Bonus Ideas):
-* **Add-On 6.1: Verification QR Code Burned on PDF**: Render a small 2D QR code onto the generated certificate bottom corner pointing to the public verification URL.
-* **Add-On 6.2: Single Sample PDF Preview**: "Preview 1st Certificate" button to instantly inspect a 1-page sample PDF before generating all 200 certificates.
-* **Add-On 6.3: Add to LinkedIn Certifications Button**: 1-click button on `CertificateVerifyPage.jsx` that formats the credential URL for LinkedIn's certification portal.
+#### 📌 Intern 6 Tasks (Visual Canvas Coordinate Designer & Batch PDF-Lib Engine)
+* **Assigned Files**: `client/src/features/group3_certificates/CanvasCoordinateEditor.jsx`, `client/src/features/group3_certificates/BatchZipGenerator.jsx`, `client/src/pages/CertificateVerifyPage.jsx`, `server/src/utils/pdfGenerator.js`
+* **Must-Have Tasks (P0)**:
+  - [ ] **Task 6.1**: In `CanvasCoordinateEditor.jsx`, enable drag-and-drop or coordinate nudge inputs for text placeholders `{Name}`, `{RollNumber}`, `{Event}`, `{Position}`, `{Date}`, `{CertificateId}` with font size, color, and alignment controls.
+  - [ ] **Task 6.2**: In `server/src/utils/pdfGenerator.js`, map Web Canvas top-left coordinates `(0, 0)` to PDF-Lib bottom-left vector space:
+    $$\text{pdfY} = \text{templateHeight} - \text{canvasY} - \text{fontSize}$$
+  - [ ] **Task 6.3**: In `BatchZipGenerator.jsx`, assign unique cryptographic IDs (`TF-2026-XXXXXX`), call `POST /api/certificates/generate-batch`, and stream a bundled `.zip` file with progress bar.
+  - [ ] **Task 6.4**: In `CertificateVerifyPage.jsx`, search by Certificate ID or Roll Number, query `GET /api/certificates/verify?query=:id`, display verified credential card, and trigger celebration confetti!
+* **Add-On Tasks (P1 Bonus Ideas)**:
+  - [ ] **Add-On 6.1**: Render a 2D QR code onto the generated certificate bottom corner pointing to the public verification URL.
+  - [ ] **Add-On 6.2**: Add a "Preview 1st Certificate" button to inspect a 1-page sample PDF before batch generating 200 certificates.
+  - [ ] **Add-On 6.3**: Add a 1-click button on `CertificateVerifyPage.jsx` pre-filling the certificate URL for LinkedIn Licenses & Certifications.
 
 ---
 
-## 6. Complete API Contracts Reference
+## 5. Complete API Contracts Reference
 
 ### Events API (`Group 1`)
 * `GET /api/events` — Returns list of events.
@@ -265,8 +229,6 @@ To guarantee that all 6 interns can develop in parallel without encountering git
 * `POST /api/events/register` — Submit student registration.
   - *Body*: `{ eventId, studentName, rollNumber, email, phone, teamMembers }`
   - *Response*: `{ success: true, message: "Registration confirmed", registrationId: "reg-123" }`
-* `GET /api/announcements` — Returns circular notices.
-  - *Response*: `{ success: true, data: [ { id, title, description, category, date, flyerUrl } ] }`
 
 ### Inventory API (`Group 2`)
 * `GET /api/inventory/items` — Returns catalog items with stock.
@@ -287,47 +249,42 @@ To guarantee that all 6 interns can develop in parallel without encountering git
 * `GET /api/certificates/verify?query=:id` — Public credential lookup.
   - *Response*: `{ success: true, certificate: { certificateId, studentName, rollNumber, eventName, issueDate, verified: true } }`
 
+### Announcements & Notices API (Master Core)
+* `GET /api/announcements` — Returns all notices (public).
+  - *Response*: `{ success: true, count, announcements: [ { id, title, category, priority, date, time, author, content, isPinned, flyerUrl, targetAudience } ] }`
+* `POST /api/announcements` — Publish notice *(Coordinators & Admins Only)*.
+* `PUT /api/announcements/:id` — Update notice *(Coordinators & Admins Only)*.
+* `DELETE /api/announcements/:id` — Delete notice *(Coordinators & Admins Only)*.
+
 ---
 
-## 7. Git Workflow & Merge Hygiene
+## 6. Git Flow & PR Instructions
 
-1. **Always start by syncing with `develop`**:
+1. **Pull the latest develop branch**:
    ```bash
    git checkout develop
    git pull origin develop
    ```
 2. **Switch to your group's feature branch**:
-   ```bash
-   # Group 1
-   git checkout feat/g1-landing-events
-   # Group 2
-   git checkout feat/g2-inventory-scanner
-   # Group 3
-   git checkout feat/g3-certificates-studio
-   ```
-3. **Commit often with clear, standard commit messages**:
+   - Group 1: `git checkout feat/g1-landing-events`
+   - Group 2: `git checkout feat/g2-inventory-scanner`
+   - Group 3: `git checkout feat/g3-certificates-studio`
+3. **Commit your changes**:
    ```bash
    git add .
-   git commit -m "feat(events): add live countdown timer to EventCard"
+   git commit -m "feat(module): descriptive message of your work"
    ```
-4. **Before opening a Pull Request, rebase with `develop`**:
+4. **Before pushing, rebase with develop**:
    ```bash
    git fetch origin
    git rebase origin/develop
    ```
-5. **Push to remote branch**:
+5. **Verify client build**:
+   ```bash
+   npm --prefix client run build
+   ```
+6. **Push to remote**:
    ```bash
    git push origin <your-branch-name>
    ```
-6. **Open Pull Request on GitHub against `develop`** (Never create PRs against `main` directly).
-
----
-
-## 8. Verification & Pre-Push Checklist
-
-Before pushing your branch, execute this check in your terminal:
-```bash
-# Verify client build compiles with 0 errors
-npm --prefix client run build
-```
-If Vite outputs `✓ built in ...ms` with **0 errors**, your code is clean and safe to push! 🚀
+7. **Open a Pull Request on GitHub against `develop`** (Never create PRs against `main` directly).
