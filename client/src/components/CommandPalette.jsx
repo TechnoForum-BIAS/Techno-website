@@ -141,19 +141,19 @@ const SEARCH_ITEMS = [
   }
 ];
 
-const CommandPalette = ({ isOpen, onClose }) => {
-  const [query, setQuery] = useState('');
+const CommandPalette = ({ isOpen, onClose, initialQuery = '' }) => {
+  const [query, setQuery] = useState(initialQuery);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
+      setQuery(initialQuery);
       setTimeout(() => inputRef.current?.focus(), 50);
-      setQuery('');
       setSelectedIndex(0);
     }
-  }, [isOpen]);
+  }, [isOpen, initialQuery]);
 
   // Filter items based on query
   const filtered = query.trim() === ''
