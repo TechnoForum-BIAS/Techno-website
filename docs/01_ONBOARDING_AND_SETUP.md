@@ -7,8 +7,8 @@ Welcome to the Technoforum engineering team at Birla Institute of Applied Scienc
 ## 1. Clone vs Fork: Which Should Interns Use?
 
 > [!TIP]
-> **Recommended Industry Practice: DIRECT CLONE (as Collaborators)**  
-> 
+> **Recommended Industry Practice: DIRECT CLONE (as Collaborators)**
+>
 > * **Direct Clone (Recommended)**: You are added as a Collaborator to `https://github.com/TechnoForum-BIAS/Techno-website.git`. You clone once, switch to your dedicated branch, and push directly. There are no multiple remotes (`origin` vs `upstream`) to manage, and branch protection rules prevent any accidental pushes to `main`.
 > * **Fork**: If an intern does not have write access yet, they can fork to their GitHub profile, clone their fork, push there, and open a PR back to `develop`.
 
@@ -46,14 +46,15 @@ npm run dev
 ## 3. Zero-Setup Offline Mock Engine
 
 > [!NOTE]
-> **No API Keys Needed to Start Coding!**  
+> **No API Keys Needed to Start Coding!**
 > If you do not have live Supabase or Brevo keys in your `.env` file, the backend automatically runs in a resilient **in-memory mock mode**. It provides mock events, mock hardware items, and mock notices with zero cloud dependencies. You can code and test your frontend features immediately!
 
 ---
 
 ## 4. Next Steps
+
 * Open [02_FILE_OWNERSHIP_MATRIX.md](./02_FILE_OWNERSHIP_MATRIX.md) to check your assigned files.
 * Open your group's specific task guide:
-  * [Group 1: Landing, Events & Notices](./03_GROUP1_EVENTS_AND_NOTICES.md)
-  * [Group 2: Hardware Catalog & AI Scanner](./04_GROUP2_INVENTORY_AND_SCANNER.md)
+  * [Group 1: Landing, Events &amp; Notices](./03_GROUP1_EVENTS_AND_NOTICES.md)
+  * [Group 2: Hardware Catalog &amp; AI Scanner](./04_GROUP2_INVENTORY_AND_SCANNER.md)
   * [Group 3: E-Certificate Studio](./05_GROUP3_CERTIFICATES_STUDIO.md)
