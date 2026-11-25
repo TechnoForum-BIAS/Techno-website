@@ -112,13 +112,25 @@ CREATE INDEX IF NOT EXISTS idx_inventory_tx_roll_number ON public.inventory_tran
 CREATE INDEX IF NOT EXISTS idx_inventory_tx_status ON public.inventory_transactions(status);
 
 -- ---------------------------------------------------------------------
--- 4. E-CERTIFICATE & VERIFICATION REGISTRY
+-- 4. E-CERTIFICATE & VERIFICATION REGISTRY (Normalized Space-Saving Architecture)
 -- ---------------------------------------------------------------------
+-- Batch-level table: Stores shared event name, date, society, and Google Drive archive URL once per batch
+CREATE TABLE IF NOT EXISTS public.certificate_batches (
+    id VARCHAR(100) PRIMARY KEY, -- e.g. BIAS-TF-FF-2026
+    society_name VARCHAR(255) NOT NULL DEFAULT 'Technoforum',
+    event_title VARCHAR(255) NOT NULL,
+    issue_date DATE DEFAULT CURRENT_DATE,
+    google_drive_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Individual Student Certificates: Minimal storage, references batch
 CREATE TABLE IF NOT EXISTS public.certificates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    certificate_id VARCHAR(100) UNIQUE NOT NULL,
+    certificate_id VARCHAR(100) UNIQUE NOT NULL, -- e.g. BIAS-TF-FF-2026-001
+    batch_id VARCHAR(100) REFERENCES public.certificate_batches(id) ON DELETE SET NULL,
     student_name VARCHAR(255) NOT NULL,
-    roll_number VARCHAR(50) NOT NULL,
+    roll_number VARCHAR(50),
     event_title VARCHAR(255) NOT NULL,
     position VARCHAR(100) DEFAULT 'Participant',
     issue_date DATE DEFAULT CURRENT_DATE,
