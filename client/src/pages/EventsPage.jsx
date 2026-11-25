@@ -107,7 +107,7 @@ const EventsPage = () => {
             Discover upcoming hackathons, tech workshops, and robotics competitions at BIAS Bhimtal.
           </p>
         </div>
-        {user?.role === 'coordinator' && (
+        {(user?.role === 'coordinator' || user?.role === 'admin') && (
           <button className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-brand-blue hover:bg-blue-600 text-white text-xs font-semibold glow-blue">
             <Plus className="w-4 h-4" />
             <span>Create New Event</span>

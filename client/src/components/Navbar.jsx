@@ -91,18 +91,25 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* Quick Role Switcher for Intern Testing */}
+            {/* Quick 3-Role Switcher for Intern Testing */}
             {user && (
               <div className="flex items-center bg-brand-card border border-brand-border rounded-lg p-1 text-xs">
                 <span className="px-2 text-brand-muted">Role:</span>
                 <button
-                  onClick={() => switchRole(user.role === 'student' ? 'coordinator' : 'student')}
-                  className={`px-2 py-1 rounded font-semibold transition-all ${
-                    user.role === 'coordinator' 
-                      ? 'bg-brand-blue text-white shadow-sm' 
-                      : 'bg-brand-cardHover text-brand-cyan'
+                  onClick={() => {
+                    const roles = ['user', 'coordinator', 'admin'];
+                    const currentIdx = roles.indexOf(user.role);
+                    const nextRole = roles[(currentIdx + 1) % roles.length];
+                    switchRole(nextRole);
+                  }}
+                  className={`px-2.5 py-1 rounded font-semibold font-mono text-[11px] transition-all ${
+                    user.role === 'admin'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : user.role === 'coordinator'
+                      ? 'bg-brand-blue text-white shadow-sm'
+                      : 'bg-brand-cardHover text-brand-cyan border border-brand-cyan/20'
                   }`}
-                  title="Click to switch between Student & Coordinator view"
+                  title="Click to cycle between User, Coordinator, and Admin"
                 >
                   {user.role.toUpperCase()}
                 </button>
@@ -179,10 +186,15 @@ const Navbar = () => {
             <div className="pt-4 border-t border-brand-border flex items-center justify-between text-sm">
               <span className="text-slate-400">Logged in as {user.name}</span>
               <button
-                onClick={() => switchRole(user.role === 'student' ? 'coordinator' : 'student')}
-                className="px-2 py-1 bg-brand-blue text-xs rounded text-white"
+                onClick={() => {
+                  const roles = ['user', 'coordinator', 'admin'];
+                  const currentIdx = roles.indexOf(user.role);
+                  const nextRole = roles[(currentIdx + 1) % roles.length];
+                  switchRole(nextRole);
+                }}
+                className="px-2 py-1 bg-brand-blue text-xs rounded text-white font-mono"
               >
-                Role: {user.role}
+                Role: {user.role.toUpperCase()}
               </button>
             </div>
           )}

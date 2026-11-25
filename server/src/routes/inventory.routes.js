@@ -12,10 +12,10 @@ const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 const upload = require('../middleware/upload.middleware');
 
 router.get('/items', getItems);
-router.post('/items', verifyToken, requireRole('coordinator', 'super_admin'), upload.single('component'), addItem);
+router.post('/items', verifyToken, requireRole('coordinator', 'admin'), upload.single('component'), addItem);
 router.get('/barcode/:serial', getBarcodeImage);
 router.post('/checkout', verifyToken, checkoutItems);
-router.patch('/audit/:transactionId', verifyToken, requireRole('coordinator', 'super_admin'), auditReturnItem);
+router.patch('/audit/:transactionId', verifyToken, requireRole('coordinator', 'admin'), auditReturnItem);
 router.post('/scan-ai', upload.single('component'), scanComponentsAI);
 
 module.exports = router;

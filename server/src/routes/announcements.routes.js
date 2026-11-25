@@ -5,6 +5,6 @@ const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 const upload = require('../middleware/upload.middleware');
 
 router.get('/', getAnnouncements);
-router.post('/', verifyToken, requireRole('coordinator', 'super_admin'), upload.single('flyer'), createAnnouncement);
+router.post('/', verifyToken, requireRole('coordinator', 'admin'), upload.single('flyer'), createAnnouncement);
 
 module.exports = router;

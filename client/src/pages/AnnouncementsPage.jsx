@@ -63,7 +63,7 @@ const AnnouncementsPage = () => {
           </p>
         </div>
 
-        {user?.role === 'coordinator' && (
+        {(user?.role === 'coordinator' || user?.role === 'admin') && (
           <button className="px-4 py-2 bg-brand-blue hover:bg-blue-600 text-white rounded-lg text-xs font-semibold glow-blue">
             + Post Announcement
           </button>

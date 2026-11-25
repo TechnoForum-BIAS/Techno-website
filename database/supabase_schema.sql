@@ -15,7 +15,14 @@ CREATE TABLE IF NOT EXISTS public.users (
     email VARCHAR(255) UNIQUE NOT NULL,
     roll_number VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'coordinator', 'super_admin')),
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'coordinator', 'user', 'student', 'super_admin')),
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_code VARCHAR(10),
+    verification_token VARCHAR(255),
+    verification_expires TIMESTAMP WITH TIME ZONE,
+    reset_code VARCHAR(10),
+    reset_token VARCHAR(255),
+    reset_expires TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

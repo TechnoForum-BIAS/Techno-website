@@ -2,6 +2,14 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'technoforum_super_secret_jwt_key_2026';
 
+const normalizeRole = (role) => {
+  if (!role) return 'user';
+  const r = role.toLowerCase().trim();
+  if (r === 'admin' || r === 'super_admin') return 'admin';
+  if (r === 'coordinator') return 'coordinator';
+  return 'user';
+};
+
 /**
  * Verify JWT token from Authorization header (Bearer <token>)
  */
@@ -14,7 +22,10 @@ const verifyToken = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    req.user = {
+      ...decoded,
+      role: normalizeRole(decoded.role)
+    };
     next();
   } catch (err) {
     return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
@@ -23,21 +34,25 @@ const verifyToken = (req, res, next) => {
 
 /**
  * Role-Based Access Control Middleware
- * @param  {...string} allowedRoles ('student', 'coordinator', 'super_admin')
+ * Supports: 'admin', 'coordinator', 'user' (plus legacy aliases 'super_admin', 'student')
  */
 const requireRole = (...allowedRoles) => {
+  const normalizedAllowed = allowedRoles.map(r => normalizeRole(r));
+
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Authentication required.' });
     }
-    if (!allowedRoles.includes(req.user.role)) {
+
+    const userRole = normalizeRole(req.user.role);
+    if (!normalizedAllowed.includes(userRole)) {
       return res.status(403).json({
         success: false,
-        message: `Forbidden. Role '${req.user.role}' does not have permission. Allowed roles: ${allowedRoles.join(', ')}`
+        message: `Forbidden. Role '${userRole}' does not have permission. Allowed roles: ${normalizedAllowed.join(', ')}`
       });
     }
     next();
   };
 };
 
-module.exports = { verifyToken, requireRole, JWT_SECRET };
+module.exports = { verifyToken, requireRole, JWT_SECRET, normalizeRole };
