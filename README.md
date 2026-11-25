@@ -25,9 +25,10 @@ Welcome to the central platform for **Technoforum**, the premier technical stude
    - Bulk vector PDF generation bundled into a downloadable `.zip` file (filename = Certificate ID).
    - Public instant verification endpoint with green shield badge and celebration confetti.
 
-4. **Role-Based Access Control**:
-   - Roles: `student`, `coordinator`, `super_admin`.
-   - Log in using University Roll Number or College Email.
+4. **Security & Role-Based Access Control**:
+   - Roles: `user` (Student Member), `coordinator` (Events/Hardware), `admin` (Administrator).
+   - 1-Click Google OAuth & Brevo SMTP email OTP verification.
+   - Dedicated Admin Console & User Role Directory (`/admin/users`).
 
 ---
 
@@ -39,7 +40,11 @@ Technoforum-website/
 │   ├── src/
 │   │   ├── components/         # Navbar, Footer, Hero3D
 │   │   ├── context/            # AuthContext, CartContext
-│   │   ├── pages/              # Home, Events, Inventory, Cert Studio, Verify, Announcements, Login
+│   │   ├── features/           # Modular Intern Subcomponents (Zero Merge Conflicts)
+│   │   │   ├── group1_events/  # EventCard, EventRegistrationModal
+│   │   │   ├── group2_inventory/# InventoryItemCard, BarcodeModal, AiScanner, IssueCart
+│   │   │   └── group3_certificates/# TemplateUploader, CsvUploader, CanvasEditor, BatchZip
+│   │   ├── pages/              # Orchestrated Views (DO NOT MODIFY DIRECTLY)
 │   │   └── App.jsx
 │   └── vite.config.js          # Pre-configured with /api proxy to localhost:5000
 │
@@ -47,24 +52,21 @@ Technoforum-website/
 │   ├── src/
 │   │   ├── config/             # Supabase client (with local mock fallback)
 │   │   ├── controllers/        # Auth, Events, Inventory, Certificates, Announcements
-│   │   ├── middleware/         # JWT Auth, Role verification, Multer upload
+│   │   ├── middleware/         # JWT Auth, Role verification, Rate limiter, Multer upload
 │   │   ├── routes/             # REST endpoints
 │   │   └── utils/              # Barcode generator (bwip-js), PDF generator (pdf-lib)
 │   └── .env.example
 │
 ├── database/
-│   ├── supabase_schema.sql         # Ready-to-run PostgreSQL schema for Supabase
-│   └── sample_students.csv         # Sample student roster for certificate testing
+│   ├── supabase_schema.sql     # Ready-to-run PostgreSQL schema for Supabase
+│   └── sample_students.csv     # Sample student roster for certificate testing
 │
-└── docs/
-    ├── ARCHITECTURE_AND_MINDMAP.md # Mermaid architecture, ERD, and mind map
-    ├── INTERN_TASKS.md             # Detailed sprint backlog for Groups 1, 2, and 3
-    └── FAQ_AND_TROUBLESHOOTING.md  # Common troubleshooting guide
+└── INTERN_MASTER_INSTRUCTIONS.md # The Complete Intern Implementation & AI Prompt File
 ```
 
 ---
 
-## 🚀 Quick Start Guide for Interns (1-Command Setup)
+## 🚀 Quick Start Guide (1-Command Setup)
 
 ### 1. Prerequisites
 * **Node.js**: v18.0.0 or higher
@@ -74,52 +76,42 @@ Technoforum-website/
 ### 2. 1-Command Installation
 Clone the repository and install all dependencies (root, server, and client) at once:
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone <repo-url>
 cd Technoforum-website
 
-# Install all dependencies across the entire monorepo in one command:
+# 2. Checkout develop staging branch
+git checkout develop
+
+# 3. Install all dependencies across the entire monorepo in one command:
 npm run install:all
 
-# Copy environment template files:
+# 4. Copy environment template files:
 cp server/.env.example server/.env
 cp client/.env.example client/.env
 ```
-```
 
 ### 3. Running Locally
-You can run both Frontend and Backend concurrently with one command from the project root:
+Run both Frontend (Port 5173) and Backend (Port 5000) concurrently with one command from the project root:
 ```bash
 npm run dev
 ```
 
-Or run them in separate terminal windows:
-* **Terminal 1 (Backend API)**:
-  ```bash
-  cd server
-  npm run dev
-  # Server runs on: http://localhost:5000
-  # Healthcheck: http://localhost:5000/api/health
-  ```
-* **Terminal 2 (Frontend Client)**:
-  ```bash
-  cd client
-  npm run dev
-  # Web application runs on: http://localhost:5173
-  ```
+* **Frontend Client**: `http://localhost:5173`
+* **Backend API**: `http://localhost:5000/api`
+* **Healthcheck**: `http://localhost:5000/api/health`
 
 ---
 
-## 👥 Intern Group Assignments
+## 👥 Intern Task Roadmap & AI Assistant Directive
 
-| Group | Focus Area | Primary Files | Branch Prefix |
-| :--- | :--- | :--- | :--- |
-| **Group 1** | Portal, 3D Hero, Events & Flyers | `client/src/pages/HomePage.jsx`, `EventsPage.jsx`, `server/src/controllers/events.controller.js` | `feat/g1-*` |
-| **Group 2** | Smart Inventory, Barcodes & AI Scanner | `client/src/pages/InventoryPage.jsx`, `server/src/controllers/inventory.controller.js` | `feat/g2-*` |
-| **Group 3** | E-Certificate Studio & Verification | `client/src/pages/CertificateStudioPage.jsx`, `CertificateVerifyPage.jsx`, `server/src/controllers/certificates.controller.js` | `feat/g3-*` |
+For all task details, assigned file ownership, API specifications, and Git flow protocols:
 
-> 📖 **Full Task Checklist**: See [docs/INTERN_TASKS.md](docs/INTERN_TASKS.md)  
-> 💡 **Troubleshooting & FAQs**: See [docs/FAQ_AND_TROUBLESHOOTING.md](docs/FAQ_AND_TROUBLESHOOTING.md)
+👉 **Please read [INTERN_MASTER_INSTRUCTIONS.md](INTERN_MASTER_INSTRUCTIONS.md)**
+
+> [!TIP]
+> **Using an AI Coding Assistant (ChatGPT, Claude, Cursor, Gemini)?**  
+> Simply feed or paste `INTERN_MASTER_INSTRUCTIONS.md` into your AI assistant. The AI will ask which intern you are (1 to 6) and strictly guide your assigned tasks without editing shared files or causing merge conflicts!
 
 ---
 
