@@ -78,6 +78,7 @@ const LoginPage = () => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (window.google?.accounts?.id && googleClientId && !googleClientId.includes('your-google')) {
       try {
+        // Initialize Google Identity Services for one-tap or OAuth response
         window.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: async (response) => {
@@ -96,15 +97,6 @@ const LoginPage = () => {
             }
           }
         });
-        const targetDiv = document.getElementById('google-btn-container');
-        if (targetDiv) {
-          window.google.accounts.id.renderButton(targetDiv, {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'continue_with'
-          });
-        }
       } catch (err) {
         console.warn('Google GSI init notice:', err);
       }
@@ -438,8 +430,6 @@ const LoginPage = () => {
         {/* Google OAuth Fast Access Button */}
         {(activeTab === 'login' || activeTab === 'signup') && (
           <div className="space-y-3">
-            <div id="google-btn-container" className="w-full"></div>
-
             <button
               type="button"
               onClick={handleGoogleClick}
