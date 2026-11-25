@@ -47,8 +47,8 @@ const register = async (req, res) => {
   try {
     const { name, email, rollNumber, password, role } = req.body;
 
-    if (!name || !email || !rollNumber || !password) {
-      return res.status(400).json({ success: false, message: 'All fields (name, email, rollNumber, password) are required.' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
     }
 
     if (password.length < 6) {
@@ -56,6 +56,7 @@ const register = async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const finalRoll = rollNumber ? rollNumber.trim() : null;
     // Public registrations are always 'user' (student). Only the official admin email receives 'admin'.
     const assignedRole = cleanEmail === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user';
     const otpCode = generateOTP();
@@ -65,11 +66,13 @@ const register = async (req, res) => {
 
     // If Supabase is connected:
     if (supabase) {
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, email, roll_number')
-        .or(`email.eq.${cleanEmail},roll_number.eq.${rollNumber}`)
-        .single();
+      let query = supabase.from('users').select('id, email, roll_number');
+      if (finalRoll) {
+        query = query.or(`email.eq.${cleanEmail},roll_number.eq.${finalRoll}`);
+      } else {
+        query = query.eq('email', cleanEmail);
+      }
+      const { data: existingUser } = await query.maybeSingle();
 
       if (existingUser) {
         return res.status(400).json({ success: false, message: 'Email or Roll Number is already registered.' });
@@ -80,7 +83,7 @@ const register = async (req, res) => {
         .insert([{
           name,
           email: cleanEmail,
-          roll_number: rollNumber,
+          roll_number: finalRoll,
           password_hash: passwordHash,
           role: assignedRole,
           is_verified: false,
@@ -107,7 +110,7 @@ const register = async (req, res) => {
 
     // In-memory fallback
     const exists = mockUsers.find(
-      u => u.email.toLowerCase() === cleanEmail || (u.rollNumber && u.rollNumber.toLowerCase() === rollNumber.toLowerCase())
+      u => u.email.toLowerCase() === cleanEmail || (finalRoll && u.rollNumber && u.rollNumber.toLowerCase() === finalRoll.toLowerCase())
     );
     if (exists) {
       return res.status(400).json({ success: false, message: 'Email or Roll Number is already registered.' });

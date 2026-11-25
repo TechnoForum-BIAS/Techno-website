@@ -1,18 +1,28 @@
 # 👥 Group 1 Implementation Guide: Landing Experience, Events & Notices
 
-**Domain**: Visual 3D Landing Page, Hackathons & Tech Events, Team Registration System & Campus Notices  
-**Assigned Interns**: **Intern 1** (Hero, 3D Mesh, Event Cards) & **Intern 2** (Registration Engine, Notices & Announcements)  
+**Domain**: Official 3D Society Emblem, Flagship Event Spotlight, Dynamic Event Form Builder, Roster CSV Export & Campus Notice Ticker  
+**Assigned Interns**: **Intern 1** (Hero 3D Emblem, Event Cards, Countdown & Ticker) & **Intern 2** (Dynamic Form Builder, Roster Table, CSV Exporter & Notice CRUD)  
 **Parent Pages**: `client/src/pages/HomePage.jsx`, `client/src/pages/EventsPage.jsx`, `client/src/pages/AnnouncementsPage.jsx`
 
 ---
 
 ## 🎯 Executive Overview & User Journey
 
-Group 1 owns the **front door of TechnoForum**. When a student or faculty member visits the website:
-1. They are greeted by an interactive, glowing **3D wireframe mesh** that reacts to their mouse movement.
-2. They browse **upcoming hackathons, robotics challenges, and workshops** with category badges, dates, venues, and live countdown timers.
-3. Clicking **"Register Participation"** opens an interactive modal supporting **solo or multi-member team registrations** with instant validation.
-4. In the **Notices section**, visitors read official society circulars, view high-res flyers in a lightbox modal, and search circulars by category.
+Group 1 owns the **visual identity and event management engine of TechnoForum**:
+1. **Interactive 3D Circuit Emblem**: Visitors are greeted by the official TechnoForum circuit logo rendered as a 3D rotating emblem tracking the mouse cursor in real time.
+2. **Breaking Notice Ticker**: A live, glowing cyber ticker bar at the top of the homepage showcases urgent campus notices with 1-click full details.
+3. **Flagship Event Showcase**: A prominent countdown spotlight banner for the annual hackathon + a 3-card grid of upcoming events with category badges, venues, deadlines, and prize pools.
+4. **Dynamic Registration Form Builder**: Coordinators and admins can design custom event registration forms (Solo vs. Team, custom questions, GitHub links), publish them per event, view isolated registration rosters, export them to **CSV in 1 click**, and clear/delete event records to save database storage.
+5. **Streamlined Registration**: Students can register with 1-click auto-fill if logged in, or as guests. On submit, an instant on-screen success receipt is displayed without consuming email quota.
+
+---
+
+## 🖼️ Official Brand Assets & Logo Locations
+
+The official TechnoForum circuit logos are saved in `client/public/assets/`:
+* `/assets/logo-dark.jpg` — Glowing cyan circuit emblem on deep blue (Primary for 3D & Navbar)
+* `/assets/logo-white.jpg` — Clean black circuit emblem on white (For print & light badges)
+* `/assets/logo-split.jpg` — The iconic split black & white TechnoForum emblem
 
 ---
 
@@ -20,59 +30,50 @@ Group 1 owns the **front door of TechnoForum**. When a student or faculty member
 
 * **Assigned Branch**: `feat/intern1-hero-events`
 * **Owned Files**:
-  * `client/src/components/Hero3D.jsx` (Interactive Three.js Canvas)
+  * `client/src/components/Hero3D.jsx` (Interactive 3D Emblem Canvas)
   * `client/src/features/group1_events/EventCard.jsx` (Dynamic Event Card)
-  * `server/src/routes/events.routes.js` (Events REST Route)
+  * `client/src/components/NoticeTickerBar.jsx` (Breaking Notice Ticker Bar)
+  * `client/src/pages/HomePage.jsx` (Flagship Spotlight & Event Grid)
 
-### 📌 Task 1.1: Interactive 3D Cyber Mesh (`Hero3D.jsx`)
-* **Objective**: Render a lightweight, responsive 3D geometric shape (Icosahedron or Torus Knot) using Three.js that floats seamlessly behind the landing page hero copy.
+### 📌 Task 1.1: Interactive 3D TechnoForum Circuit Emblem (`Hero3D.jsx`)
+* **Objective**: Render an interactive 3D floating emblem of the official TechnoForum circuit logo using Three.js that tilts smoothly as the visitor moves their mouse.
 * **Step-by-Step Implementation**:
-  1. **Canvas Initialization**:
-     * In a `useEffect` hook, initialize a `THREE.Scene`, `THREE.PerspectiveCamera`, and `THREE.WebGLRenderer` with `{ alpha: true, antialias: true }`.
-     * Attach the renderer DOM element to a container `div` referenced via `useRef`.
-  2. **Geometry & Glowing Wireframe Material**:
-     * Create an `IcosahedronGeometry(2.2, 2)` or `TorusKnotGeometry(1.5, 0.4, 100, 16)`.
-     * Use `MeshStandardMaterial` or `MeshBasicMaterial` with `{ wireframe: true, color: 0x38BDF8 }` (Cyan) with a secondary inner mesh or point light colored `0x2563EB` (Blue).
-  3. **Mouse Tracking & Damping**:
-     * Add a `mousemove` listener to `window`. Record normalized cursor coordinates: `mouseX = (e.clientX / window.innerWidth) * 2 - 1`.
-     * In the `requestAnimationFrame` loop, gently interpolate mesh rotation toward cursor position:
+  1. **Three.js Scene Setup**:
+     * In a `useEffect` hook, create `THREE.Scene`, `THREE.PerspectiveCamera`, and `THREE.WebGLRenderer` with `{ alpha: true, antialias: true }`.
+     * Attach renderer canvas to a container `div` referenced via `useRef`.
+  2. **3D Circuit Texture Plane / Emblem Geometry**:
+     * Load the official texture: `new THREE.TextureLoader().load('/assets/logo-dark.jpg')`.
+     * Create a rounded cylinder emblem or double-sided plane geometry: `new THREE.PlaneGeometry(3.5, 3.5)`.
+     * Add an outer glowing ring or wireframe torus geometry (`THREE.TorusGeometry(2.2, 0.05, 16, 100)`) in brand cyan (`#38BDF8`).
+  3. **Mouse Tracking & Smooth Damping**:
+     * Track window mouse position: `targetRotationY = mouseX * 0.4`, `targetRotationX = -mouseY * 0.4`.
+     * In the `requestAnimationFrame` loop, apply damping:
        ```javascript
        mesh.rotation.y += (targetRotationY - mesh.rotation.y) * 0.05;
        mesh.rotation.x += (targetRotationX - mesh.rotation.x) * 0.05;
        ```
-  4. **Performance & Viewport Optimization**:
-     * Use `IntersectionObserver` to pause the animation loop when the user scrolls past the hero section to keep CPU/GPU usage at 0%.
-     * Handle window resizing via `window.addEventListener('resize', onResize)`.
-* **Expected Output**: A smooth, glowing 60fps cyan/blue wireframe structure floating behind the "Ignite Innovation" hero text that rotates as the visitor moves their mouse.
+  4. **Performance Optimization**:
+     * Use `IntersectionObserver` to pause rendering when the user scrolls past the hero section.
 
 ---
 
-### 📌 Task 1.2: Dynamic Event Card (`EventCard.jsx`)
-* **Objective**: Build a modular, interactive card representing an event with real-time metadata.
-* **Component Props**:
-  * `event`: `{ id, title, category, date, time, venue, description, maxParticipants, bannerUrl, status }`
-  * `onRegister`: Callback function invoked when user clicks the register button.
-* **Step-by-Step Implementation**:
-  1. **Category Pills**: Render distinctive cyber badge styles based on `event.category`:
-     * Hackathon: `bg-cyan-950/60 text-cyan-400 border border-cyan-800`
-     * Robotics: `bg-purple-950/60 text-purple-400 border border-purple-800`
-     * Workshop: `bg-blue-950/60 text-blue-400 border border-blue-800`
-     * Coding: `bg-emerald-950/60 text-emerald-400 border border-emerald-800`
-  2. **Status Badge**: Show `Upcoming` (green) or `Ongoing` (amber) with pulse animation.
-  3. **Event Metadata Grid**:
-     * Formatted Date & Time with `Calendar` icon.
-     * Venue name with `MapPin` icon.
-     * Registered vs Max Capacity indicator with `Users` icon.
-  4. **Action Trigger**: "Register Participation" button with hover glow (`bg-brand-blue hover:bg-blue-600 glow-blue`).
-* **Expected Output**: A glassmorphic card with dark cyber styling (`#0D1527`), crisp typography, truncated 3-line description, and a responsive register button.
+### 📌 Task 1.2: Flagship Spotlight & Event Cards (`EventCard.jsx`)
+* **Objective**: Build the homepage event showcase featuring a flagship countdown banner + a 3-card grid of upcoming events.
+* **Component Requirements**:
+  1. **Flagship Countdown Banner**:
+     * Prominently display the next major hackathon with a live ticking countdown timer (`DD : HH : MM : SS`).
+  2. **Event Card Metadata**:
+     * Category badge: Hackathon (`cyan`), Robotics (`purple`), Workshop (`blue`), Coding (`emerald`).
+     * Date, Time, Venue, Registration Deadline, and Entry Type ("Free" or Prize Pool).
+     * "Register" action button triggering the registration modal.
 
 ---
 
-### 🌟 Intern 1 Bonus / Add-On Enhancements (P1 Distinction)
-* **Live Ticking Countdown Timer**: If `event.date` is in the future, display a real-time `DD : HH : MM : SS` countdown badge on the card using a `setInterval` hook.
-* **Google Calendar / .ics Export**: Add a small calendar icon button on the card that opens a pre-filled Google Calendar URL:
-  `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formattedDate}&details=${description}&location=${venue}`.
-* **Category Filter Bar**: In `EventsPage.jsx`, add 1-click filter tabs: `[All]`, `[Hackathons]`, `[Robotics]`, `[Workshops]`.
+### 📌 Task 1.3: Campus Notice Ticker Bar (`NoticeTickerBar.jsx`)
+* **Objective**: A sleek, animated breaking circulars ticker at the top of the homepage.
+* **Behavior**:
+  * Shows the latest urgent notices in an animated marquee or carousel.
+  * Clicking any notice item opens a slide-over drawer or modal displaying the complete circular text and flyer.
 
 ---
 
@@ -80,111 +81,96 @@ Group 1 owns the **front door of TechnoForum**. When a student or faculty member
 
 * **Assigned Branch**: `feat/intern2-registration-notices`
 * **Owned Files**:
-  * `client/src/features/group1_events/EventRegistrationModal.jsx` (Registration Engine)
-  * `client/src/pages/AnnouncementsPage.jsx` (Society Notices Hub)
-  * `server/src/controllers/events.controller.js` (Event Registration API Logic)
+  * `client/src/features/group1_events/EventFormBuilderModal.jsx` (Custom Registration Form Builder)
+  * `client/src/features/group1_events/EventRegistrationModal.jsx` (Student Registration Form)
+  * `client/src/features/group1_events/EventRosterModal.jsx` (Isolated Roster & CSV Downloader)
+  * `client/src/components/NoticeModal.jsx` (Notice CRUD Modal)
+  * `server/src/controllers/events.controller.js` (Form Schemas & Registration Endpoints)
 
-### 📌 Task 2.1: Event Registration Engine (`EventRegistrationModal.jsx`)
-* **Objective**: An interactive modal allowing individual or team registrations for any event, with instant client-side validation and feedback.
-* **Component Props**:
-  * `event`: Selected event object.
-  * `isOpen`: Boolean.
-  * `onClose`: Callback function to close modal.
+### 📌 Task 2.1: Custom Event Registration Form Builder (`EventFormBuilderModal.jsx`)
+* **Objective**: Allow coordinators and admins to create dynamic, tailored registration forms for different events (e.g. Solo vs. Team, custom questions, GitHub links).
 * **Step-by-Step Implementation**:
-  1. **Form Fields**:
-     * **Full Name** (`text`, required)
-     * **University Roll Number** (`text`, required, e.g. `230101` — regex: `/^\d{6}$/`)
-     * **College Email** (`email`, required, e.g. `student@birlainstitute.co.in`)
-     * **WhatsApp Contact Number** (`tel`, 10 digits)
-     * **Registration Type Toggle**: Radio pill between `Solo Participant` and `Team Registration`.
-     * **Dynamic Team Members Section**: If "Team" is selected, allow adding up to 3 teammate names and roll numbers dynamically.
-  2. **Auto-Fill for Logged-In Users**:
-     * Import `useAuth()`. If `user` exists in context, auto-populate Name, Email, and Roll Number so students don't re-type them!
-  3. **API Submission**:
-     * On submit, send `POST /api/events/register` with JSON payload:
-       ```json
-       {
-         "eventId": "evt-001",
-         "studentName": "Aarav Sharma",
-         "rollNumber": "230101",
-         "email": "aarav@birlainstitute.co.in",
-         "phone": "9876543210",
-         "teamMembers": ["Priya Verma (230142)", "Rohan Joshi (230115)"]
-       }
-       ```
-  4. **Success State**: Display an animated green checkmark with a confirmation badge: *"Registration Confirmed! Your pass has been recorded."*
-* **Expected Output**: A clean, accessible modal with blur backdrop, validation error messages, and loading states on submit.
+  1. **Template Selection**:
+     * Preset templates: `Standard Solo Form`, `Hackathon Team Form (2-4 Members)`, `Workshop Feedback Form`.
+  2. **Dynamic Field Builder**:
+     * Allow coordinators to toggle or add custom fields:
+       * Team Name & Teammates (names + roll numbers)
+       * GitHub / Portfolio URL
+       * Year & Branch selection
+       * Short answer questions (e.g. *"What is your tech stack?"*)
+  3. **Publish Schema**:
+     * Saves the form schema to the event record (`custom_form_schema` JSON in database).
 
 ---
 
-### 📌 Task 2.2: Campus Notices & Circulars Viewer (`AnnouncementsPage.jsx`)
-* **Objective**: Display all official department circulars, lab guidelines, and recruitment alerts with search, category filters, and flyer modal previews.
-* **Step-by-Step Implementation**:
-  1. **Fetch Notices**: Call `GET /api/announcements` on page mount.
-  2. **Pinned Notice Callout**: Give pinned notices (`is_pinned: true`) a prominent gold/cyan border and badge at the top of the feed.
-  3. **Flyer Lightbox Modal**: When clicking an announcement flyer thumbnail, open a full-resolution modal preview with a download button.
-  4. **Search & Filter**: Provide search by notice title/content and filter by category (`All`, `Hackathons`, `Lab Rules`, `Recruitment`).
-* **Expected Output**: A responsive bulletin board page showing notices in chronological order, with high-res flyer image zoom and category filtering.
+### 📌 Task 2.2: Student Event Registration Modal (`EventRegistrationModal.jsx`)
+* **Objective**: Dynamically render the form designed by the coordinator for that specific event.
+* **Behavior**:
+  * Auto-populates student details (Name, Email, Roll Number) if the user is logged in.
+  * Allows guests to enter details manually if not logged in.
+  * Validates all required fields according to the event's custom schema.
+  * On submit, saves the registration and shows an **instant on-screen confirmation receipt** (no SMTP email sent, preserving email quotas).
 
 ---
 
-### 🌟 Intern 2 Bonus / Add-On Enhancements (P1 Distinction)
-* **Downloadable Digital Event Pass**: On successful registration, offer a "Download Event Pass" button generating a small PNG ticket containing event title, student roll number, and a QR code with `canvas`.
-* **Duplicate Registration Guard**: Verify if the student's roll number is already registered for this event; if so, show a helpful message: *"You are already registered for this event!"*.
+### 📌 Task 2.3: Isolated Event Roster & CSV Export (`EventRosterModal.jsx`)
+* **Objective**: Allow coordinators to inspect registered participants for any event in an isolated table, download a clean CSV, and clear records to save space.
+* **Key Actions**:
+  1. **View Roster**: Table showing registered students, roll numbers, submission time, and custom answers.
+  2. **1-Click Download CSV**: Export the entire participant list for that event as a `.csv` file.
+  3. **Delete Roster / Clear Storage**: A "Clear Event Registrations" button with a confirmation prompt allowing coordinators to purge registration data once an event concludes to conserve database space.
+
+---
+
+### 📌 Task 2.4: Notice Management (CRUD) (`NoticeModal.jsx`)
+* **Objective**: Provide full CRUD for campus notices with calendar date picking, time selection, priority, category, audience, and pin-to-top.
+* **Permissions**: Accessible only to users with role `coordinator` or `admin`.
 
 ---
 
 ## 3. 📡 API Contract Reference
 
 ### `GET /api/events`
-* **Response**:
-  ```json
-  {
-    "success": true,
-    "count": 3,
-    "events": [
-      {
-        "id": "evt-001",
-        "title": "TechnoHacks 2026: Flagship Hackathon",
-        "category": "Hackathon",
-        "date": "2026-12-15",
-        "time": "10:00 AM - 10:00 PM",
-        "venue": "BIAS Auditorium & Lab Complex",
-        "description": "36-hour non-stop innovation sprint solving real campus challenges.",
-        "maxParticipants": 120,
-        "status": "upcoming"
-      }
-    ]
-  }
-  ```
+* Returns all active events with their custom form schemas and registration counts.
 
-### `POST /api/events/register`
+### `POST /api/events/:id/register`
 * **Request Body**:
   ```json
   {
-    "eventId": "evt-001",
     "studentName": "Aarav Sharma",
-    "rollNumber": "230101",
     "email": "aarav@birlainstitute.co.in",
-    "phone": "9876543210",
-    "teamMembers": ["Priya Verma (230142)"]
+    "rollNumber": "230101",
+    "isGuest": false,
+    "formResponses": {
+      "teamName": "CyberKnights",
+      "teamMembers": ["Priya Verma (230142)", "Rohan Joshi (230115)"],
+      "githubUrl": "https://github.com/aarav"
+    }
   }
   ```
 * **Response**:
   ```json
   {
     "success": true,
-    "message": "Successfully registered for TechnoHacks 2026",
-    "registrationId": "reg-1795600000"
+    "message": "Registration confirmed successfully! See you at the event.",
+    "registrationId": "reg-1795600123"
   }
   ```
+
+### `GET /api/events/:id/roster/export-csv`
+* Returns a downloadable `.csv` file containing all registered students and their form responses for that event.
+
+### `DELETE /api/events/:id/roster`
+* Purges all registration records for the specified event to free database space.
 
 ---
 
 ## 4. 🧪 Local Testing & Verification Checklist
 
-1. [ ] Run `npm run dev` in the project root.
-2. [ ] Open `http://localhost:5173`. Verify the 3D mesh loads smoothly behind the hero copy and moves with your mouse.
-3. [ ] Navigate to `/events`. Verify that all sample events render with appropriate category colors.
-4. [ ] Click "Register Participation". Verify modal opens, accepts roll number, validates inputs, and submits successfully.
-5. [ ] Navigate to `/announcements`. Verify that pinned notices appear first and clicking a flyer opens the lightbox preview.
+1. [ ] Start dev servers (`npm run dev`).
+2. [ ] Open `http://localhost:5173`. Verify the 3D circuit emblem rotates smoothly tracking your cursor.
+3. [ ] Check the top notice ticker bar: click an alert to view full circular details.
+4. [ ] Check the Flagship countdown timer: verify `DD : HH : MM : SS` updates every second.
+5. [ ] Log in as coordinator/admin. Click "+ Add Event Form" to configure fields for a new hackathon.
+6. [ ] Register for the event: verify auto-fill works for logged-in students and guests can type manually.
+7. [ ] In coordinator view, open the event roster: verify participant data displays, click "Export CSV" to verify file download, and test clearing records.

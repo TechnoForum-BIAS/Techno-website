@@ -129,10 +129,10 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
         <div className="flex items-center justify-between gap-3 sm:gap-6">
 
-          {/* 1. BRAND LOGO */}
+          {/* 1. BRAND LOGO (OFFICIAL TECHNOFORUM LOGO) */}
           <Link to="/" className="flex items-center space-x-2.5 group flex-shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-blue via-blue-600 to-brand-cyan flex items-center justify-center shadow-lg glow-cyan group-hover:scale-105 transition-transform">
-              <Cpu className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-brand-cyan/40 bg-[#070B19] flex items-center justify-center shadow-lg glow-cyan group-hover:scale-105 transition-transform">
+              <img src="/assets/logo-dark.jpg" alt="TechnoForum Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="text-base sm:text-lg font-black tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-brand-cyan font-sans leading-none">

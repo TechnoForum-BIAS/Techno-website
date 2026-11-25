@@ -555,22 +555,6 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* University Roll Number */}
-            <div>
-              <label className="block text-slate-300 mb-1">University Roll Number</label>
-              <div className="relative">
-                <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                <input
-                  type="text"
-                  required
-                  value={signupForm.rollNumber}
-                  onChange={(e) => setSignupForm({ ...signupForm, rollNumber: e.target.value })}
-                  placeholder="e.g. 230101"
-                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
-                />
-              </div>
-            </div>
-
             {/* Email Address */}
             <div>
               <label className="block text-slate-300 mb-1">Email Address</label>
