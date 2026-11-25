@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Hero3D from '../components/Hero3D';
+import { useAuth } from '../context/AuthContext';
+import NoticeModal from '../components/NoticeModal';
 import { 
   Boxes, 
   Award, 
@@ -11,10 +13,30 @@ import {
   ShieldCheck, 
   Terminal, 
   Sparkles,
-  Users
+  Users,
+  Bell,
+  Pin,
+  Clock,
+  Plus,
+  FileText
 } from 'lucide-react';
 
 const HomePage = () => {
+  const { user } = useAuth();
+  const [notices, setNotices] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/announcements')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.announcements) setNotices(data.announcements.slice(0, 3));
+      })
+      .catch(() => {});
+  }, []);
+
+  const canManageNotices = user?.role === 'coordinator' || user?.role === 'admin';
+
   return (
     <div className="space-y-20">
       
@@ -200,25 +222,99 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* College Notice Callout */}
+      {/* =========================================================================
+          LATEST CAMPUS NOTICES & CIRCULARS (VISIBLE TO EVERYONE WITH OR WITHOUT LOGIN)
+      ========================================================================= */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-gradient-to-r from-brand-card via-brand-cardHover to-brand-card border border-brand-border p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <h3 className="text-xl font-bold text-white">Have questions about hardware or events?</h3>
-            <p className="text-xs text-slate-400">
-              Check our latest society circulars or reach out to your year coordinator.
-            </p>
+        <div className="rounded-3xl bg-brand-card/90 border border-brand-border p-6 sm:p-10 glow-card space-y-6">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-border/80 pb-5">
+            <div className="space-y-1">
+              <div className="inline-flex items-center space-x-2 text-xs font-mono font-bold text-brand-cyan uppercase tracking-wider">
+                <Bell className="w-4 h-4" />
+                <span>OFFICIAL BROADCAST BULLETIN</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                Latest Campus Notices & Circulars
+              </h2>
+              <p className="text-xs text-slate-400">
+                Direct updates on lab timings, hardware return verification, and hackathon guidelines.
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {canManageNotices && (
+                <button
+                  onClick={() => setModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-brand-cyan text-white text-xs font-bold shadow-md glow-blue flex items-center space-x-1.5 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Create Notice</span>
+                </button>
+              )}
+              <Link
+                to="/announcements"
+                className="px-4 py-2 rounded-xl bg-brand-bg hover:bg-brand-cardHover border border-brand-border text-xs font-semibold text-brand-cyan flex items-center space-x-1.5 transition-colors"
+              >
+                <span>View All Notices</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <Link
-              to="/announcements"
-              className="px-5 py-2.5 rounded-lg bg-brand-blue hover:bg-blue-600 text-white text-xs font-semibold transition-colors"
-            >
-              View Circular Flyers
-            </Link>
+
+          {/* Notices Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {notices.map((notice) => (
+              <div
+                key={notice.id}
+                className={`rounded-2xl bg-brand-bg/90 border p-5 flex flex-col justify-between space-y-4 hover:border-slate-700 transition-all ${
+                  notice.isPinned ? 'border-brand-cyan/40 shadow-sm' : 'border-brand-border'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-brand-card border border-brand-border text-slate-300">
+                      {notice.category}
+                    </span>
+                    {notice.isPinned && (
+                      <span className="flex items-center space-x-1 text-[10px] font-mono text-brand-cyan font-bold">
+                        <Pin className="w-3 h-3" />
+                        <span>PINNED</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug">
+                    {notice.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                    {notice.content}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-brand-border/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-3.5 h-3.5 text-brand-cyan" />
+                    <span>{notice.date}</span>
+                  </div>
+                  <Link to="/announcements" className="text-brand-cyan hover:underline font-semibold">
+                    Read more →
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
+
         </div>
       </section>
+
+      {/* Notice Creation Modal */}
+      <NoticeModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSaved={(newNotice) => setNotices((prev) => [newNotice, ...prev.slice(0, 2)])}
+      />
 
     </div>
   );

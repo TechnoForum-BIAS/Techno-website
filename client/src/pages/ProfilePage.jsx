@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import NoticeModal from '../components/NoticeModal';
 import { 
   User, 
   Mail, 
@@ -22,11 +23,16 @@ import {
   Cpu,
   Layers,
   Activity,
-  Users
+  Users,
+  Bell,
+  Pin,
+  Pencil,
+  Trash2,
+  ArrowRight
 } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const navigate = useNavigate();
 
   // Active section tab in profile
@@ -39,11 +45,27 @@ const ProfilePage = () => {
   const [certificates, setCertificates] = useState([]);
   const [inventoryStats, setInventoryStats] = useState({ total: 183, available: 144, issued: 39 });
 
+  // Campus Notices State & Modal
+  const [notices, setNotices] = useState([]);
+  const [noticeModalOpen, setNoticeModalOpen] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState(null);
+  const [deleteNoticeLoading, setDeleteNoticeLoading] = useState(null);
+
+  const canManageNotices = user?.role === 'coordinator' || user?.role === 'admin';
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
+
+    // Fetch campus announcements
+    fetch('/api/announcements')
+      .then(res => res.json())
+      .then(data => {
+        if (data.announcements) setNotices(data.announcements);
+      })
+      .catch(() => {});
 
     // Fetch active issues & transactions
     fetch('/api/inventory/items')
@@ -115,6 +137,47 @@ const ProfilePage = () => {
   }, [user, navigate]);
 
   if (!user) return null;
+
+  const handleCreateNotice = () => {
+    setSelectedNotice(null);
+    setNoticeModalOpen(true);
+  };
+
+  const handleEditNotice = (notice) => {
+    setSelectedNotice(notice);
+    setNoticeModalOpen(true);
+  };
+
+  const handleDeleteNotice = async (id, title) => {
+    if (!window.confirm(`Delete notice "${title}"?`)) return;
+    setDeleteNoticeLoading(id);
+    try {
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'DELETE',
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNotices(prev => prev.filter(n => n.id !== id));
+      } else {
+        alert(data.message || 'Failed to delete notice');
+      }
+    } catch {
+      alert('Network error deleting notice');
+    } finally {
+      setDeleteNoticeLoading(null);
+    }
+  };
+
+  const handleNoticeSaved = (savedNotice) => {
+    setNotices(prev => {
+      const exists = prev.some(n => n.id === savedNotice.id);
+      if (exists) {
+        return prev.map(n => n.id === savedNotice.id ? savedNotice : n);
+      }
+      return [savedNotice, ...prev];
+    });
+  };
 
   const roleLabel = user.role === 'admin' 
     ? 'Super Administrator' 
@@ -530,7 +593,115 @@ const ProfilePage = () => {
           </div>
         )}
 
+        {/* =========================================================================
+            CAMPUS NOTICES & CIRCULARS (VISIBLE TO EVERY USER ROLE ON PROFILE)
+        ========================================================================= */}
+        <div className="rounded-2xl bg-brand-card border border-brand-border p-6 glow-card space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-brand-border pb-4">
+            <div>
+              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                <Bell className="w-5 h-5 text-brand-cyan" />
+                <span>Campus Circulars & Official Announcements</span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Live bulletins on laboratory timings, hardware audits, and hackathon guidelines.
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {canManageNotices && (
+                <button
+                  onClick={handleCreateNotice}
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-brand-cyan text-white text-xs font-bold shadow-md glow-blue flex items-center space-x-1.5 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Create Notice</span>
+                </button>
+              )}
+              <Link
+                to="/announcements"
+                className="text-xs font-semibold text-brand-cyan hover:underline flex items-center space-x-1"
+              >
+                <span>Full Notice Board</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Notices Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {notices.slice(0, 6).map((notice) => (
+              <div
+                key={notice.id}
+                className={`p-4 rounded-xl bg-brand-bg/90 border flex flex-col justify-between space-y-3 transition-colors ${
+                  notice.isPinned ? 'border-brand-cyan/40 shadow-sm' : 'border-brand-border hover:border-slate-700'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-brand-card border border-brand-border text-slate-300">
+                      {notice.category}
+                    </span>
+                    {notice.isPinned && (
+                      <span className="flex items-center space-x-1 text-[10px] font-mono text-brand-cyan font-bold">
+                        <Pin className="w-3 h-3" />
+                        <span>PINNED</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="text-xs font-bold text-white line-clamp-2 leading-snug">
+                    {notice.title}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 line-clamp-3 leading-relaxed">
+                    {notice.content}
+                  </p>
+                </div>
+
+                <div className="pt-2.5 border-t border-brand-border/60 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-3 h-3 text-brand-cyan" />
+                    <span>{notice.date}</span>
+                  </div>
+
+                  {canManageNotices ? (
+                    <div className="flex items-center space-x-1.5">
+                      <button
+                        onClick={() => handleEditNotice(notice)}
+                        className="p-1 rounded text-slate-400 hover:text-brand-cyan transition-colors"
+                        title="Edit notice"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteNotice(notice.id, notice.title)}
+                        disabled={deleteNoticeLoading === notice.id}
+                        className="p-1 rounded text-slate-400 hover:text-rose-400 transition-colors"
+                        title="Delete notice"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Link to="/announcements" className="text-brand-cyan hover:underline">
+                      Details →
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
+
+      {/* Notice Creation & Edit Modal */}
+      <NoticeModal
+        isOpen={noticeModalOpen}
+        onClose={() => setNoticeModalOpen(false)}
+        onSaved={handleNoticeSaved}
+        initialNotice={selectedNotice}
+      />
 
     </div>
   );
