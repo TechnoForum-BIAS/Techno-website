@@ -67,11 +67,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   // API Call: Google OAuth
-  const googleLogin = async ({ email, name, picture, credential, role }) => {
+  const googleLogin = async ({ email, name, picture, credential, accessToken, role }) => {
     const res = await fetch('/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name, picture, credential, role })
+      body: JSON.stringify({ email, name, picture, credential, accessToken, role })
     });
     const data = await res.json();
     if (data.success && data.token && data.user) {

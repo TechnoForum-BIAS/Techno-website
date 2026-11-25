@@ -430,13 +430,31 @@ const login = async (req, res) => {
 
 /**
  * Google OAuth Fast Login / Signup Endpoint
+ * Automatically logs in existing accounts or creates new verified accounts without a password
  */
 const googleAuth = async (req, res) => {
   try {
-    let { email, name, picture, credential, role } = req.body;
+    let { email, name, picture, credential, accessToken, role } = req.body;
 
-    // Decode Google ID Token if passed from Google Identity Services (GSI)
-    if (credential) {
+    // 1. If accessToken is passed, fetch verified Google profile from Google API
+    if (!email && accessToken) {
+      try {
+        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (userInfoRes.ok) {
+          const profile = await userInfoRes.json();
+          email = profile.email;
+          name = profile.name || name;
+          picture = profile.picture || picture;
+        }
+      } catch (fetchErr) {
+        console.warn('Failed to fetch Google userinfo from accessToken:', fetchErr.message);
+      }
+    }
+
+    // 2. Decode Google ID Token if passed from Google Identity Services (GSI)
+    if (!email && credential) {
       try {
         const parts = credential.split('.');
         if (parts.length === 3) {
@@ -465,12 +483,14 @@ const googleAuth = async (req, res) => {
         .from('users')
         .select('*')
         .eq('email', cleanEmail)
-        .single();
+        .maybeSingle();
 
       if (!user) {
-        // Create new user authenticated via Google
+        // -------------------------------------------------------------
+        // NEW USER: Create account directly, pre-verified, no password needed
+        // -------------------------------------------------------------
         const generatedRoll = `G-${Date.now().toString().slice(-6)}`;
-        const { data: newUser, error } = await supabase
+        const { data: newUser, error: insertError } = await supabase
           .from('users')
           .insert([{
             name: name || cleanEmail.split('@')[0],
@@ -484,18 +504,29 @@ const googleAuth = async (req, res) => {
           .select()
           .single();
 
-        if (error) throw error;
+        if (insertError) {
+          console.error('Error creating Google user in Supabase:', insertError);
+          throw insertError;
+        }
         user = newUser;
       } else {
-        // Ensure verified and update avatar
-        await supabase
+        // -------------------------------------------------------------
+        // EXISTING USER: Directly log in! Update avatar and ensure verified
+        // -------------------------------------------------------------
+        const { data: updatedUser } = await supabase
           .from('users')
           .update({
             is_verified: true,
             avatar_url: picture || user.avatar_url,
             auth_provider: user.auth_provider || 'google'
           })
-          .eq('id', user.id);
+          .eq('id', user.id)
+          .select()
+          .single();
+
+        if (updatedUser) {
+          user = updatedUser;
+        }
       }
 
       const finalRole = normalizeRole(user.role, user.email);
@@ -509,11 +540,18 @@ const googleAuth = async (req, res) => {
         success: true,
         message: 'Google authentication successful',
         token,
-        user: { id: user.id, name: user.name, email: user.email, rollNumber: user.roll_number, role: finalRole, avatarUrl: user.avatar_url }
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          rollNumber: user.roll_number, 
+          role: finalRole, 
+          avatarUrl: user.avatar_url 
+        }
       });
     }
 
-    // Fallback Mock
+    // Fallback Mock (when Supabase is in local in-memory fallback)
     let user = mockUsers.find(u => u.email.toLowerCase() === cleanEmail);
     if (!user) {
       const generatedRoll = `G-${Date.now().toString().slice(-6)}`;
@@ -541,11 +579,18 @@ const googleAuth = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Google authentication successful',
       token,
-      user: { id: user.id, name: user.name, email: user.email, rollNumber: user.rollNumber, role: finalRole, avatarUrl: user.avatar_url }
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        rollNumber: user.rollNumber, 
+        role: finalRole, 
+        avatarUrl: user.avatar_url 
+      }
     });
   } catch (error) {
     console.error('Google Auth Error:', error);
