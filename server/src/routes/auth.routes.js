@@ -8,9 +8,11 @@ const {
   googleAuth,
   forgotPassword,
   resetPassword,
-  getMe
+  getMe,
+  getAllUsers,
+  updateUserRole
 } = require('../controllers/auth.controller');
-const { verifyToken } = require('../middleware/auth.middleware');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
 // Authentication & Registration with Rate Limiting
@@ -30,5 +32,9 @@ router.post('/reset-password', otpLimiter, resetPassword);
 
 // Profile
 router.get('/me', verifyToken, getMe);
+
+// Admin-Only User Management Directory & Role Upgrades
+router.get('/users', verifyToken, requireRole('admin'), getAllUsers);
+router.patch('/users/:id/role', verifyToken, requireRole('admin'), updateUserRole);
 
 module.exports = router;

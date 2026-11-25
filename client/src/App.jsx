@@ -10,6 +10,7 @@ import CertificateVerifyPage from './pages/CertificateVerifyPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/announcements" element={<AnnouncementsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
         </Routes>
       </main>
       <Footer />

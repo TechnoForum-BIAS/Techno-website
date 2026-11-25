@@ -55,7 +55,8 @@ const register = async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const assignedRole = normalizeRole(role, cleanEmail);
+    // Public registrations are always 'user' (student). Only the official admin email receives 'admin'.
+    const assignedRole = cleanEmail === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user';
     const otpCode = generateOTP();
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
@@ -475,7 +476,9 @@ const googleAuth = async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const assignedRole = normalizeRole(role, cleanEmail);
+    // Public Google registrations are strictly 'user' (student) by default.
+    // Only the official ADMIN_EMAIL automatically receives 'admin'.
+    const assignedRole = cleanEmail === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user';
 
     if (supabase) {
       // Check if user already exists
@@ -742,6 +745,116 @@ const getMe = async (req, res) => {
   res.json({ success: true, user: req.user });
 };
 
+/**
+ * Get All Users (Admin Only)
+ * Returns complete user directory with roles and statuses
+ */
+const getAllUsers = async (req, res) => {
+  try {
+    if (supabase) {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('id, name, email, roll_number, role, is_verified, auth_provider, avatar_url, created_at, updated_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return res.json({ success: true, users: users || [] });
+    }
+
+    // Fallback Mock Users
+    const sanitizedMock = mockUsers.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      roll_number: u.rollNumber || u.roll_number,
+      role: u.role,
+      is_verified: u.isVerified || u.is_verified,
+      auth_provider: u.authProvider || u.auth_provider || 'local',
+      avatar_url: u.avatarUrl || u.avatar_url || '',
+      created_at: u.created_at || new Date().toISOString()
+    }));
+
+    return res.json({ success: true, users: sanitizedMock });
+  } catch (err) {
+    console.error('getAllUsers error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch users: ' + err.message });
+  }
+};
+
+/**
+ * Update User Role (Admin Only)
+ * Can promote/demote to 'admin', 'coordinator', 'user'. Protects super admin.
+ */
+const updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role || !['admin', 'coordinator', 'user'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role. Must be admin, coordinator, or user.' });
+    }
+
+    if (supabase) {
+      // 1. Fetch user to verify existence and check if it's the primary super admin
+      const { data: targetUser, error: fetchErr } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchErr || !targetUser) {
+        return res.status(404).json({ success: false, message: 'Target user not found.' });
+      }
+
+      // Safeguard: Cannot demote the official super administrator
+      if (targetUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Cannot demote the official super administrator.' });
+      }
+
+      // 2. Update role
+      const { data: updated, error: updateErr } = await supabase
+        .from('users')
+        .update({ role, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select('id, name, email, roll_number, role, is_verified, auth_provider, avatar_url, updated_at')
+        .single();
+
+      if (updateErr) throw updateErr;
+
+      return res.json({
+        success: true,
+        message: `Role for ${updated.name} updated to "${role}" successfully.`,
+        user: updated
+      });
+    }
+
+    // Mock Fallback
+    const targetUser = mockUsers.find(u => u.id === id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'Target user not found in mock store.' });
+    }
+
+    if (targetUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Cannot demote the official super administrator.' });
+    }
+
+    targetUser.role = role;
+    return res.json({
+      success: true,
+      message: `Role for ${targetUser.name} updated to "${role}" successfully.`,
+      user: {
+        id: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        role: targetUser.role
+      }
+    });
+  } catch (err) {
+    console.error('updateUserRole error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update user role: ' + err.message });
+  }
+};
+
 module.exports = {
   register,
   verifyEmail,
@@ -751,6 +864,8 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getMe,
+  getAllUsers,
+  updateUserRole,
   mockUsers,
   normalizeRole,
   OFFICIAL_ADMIN_EMAIL

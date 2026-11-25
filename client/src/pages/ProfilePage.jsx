@@ -21,7 +21,8 @@ import {
   Database,
   Cpu,
   Layers,
-  Activity
+  Activity,
+  Users
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -422,7 +423,14 @@ const ProfilePage = () => {
                   Master permissions active for: <code className="text-purple-300 bg-purple-900/60 px-2 py-0.5 rounded">techno_forum@birlainstitute.co.in</code>
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  to="/admin/users"
+                  className="px-4 py-2 bg-brand-cyan hover:bg-cyan-400 text-brand-bg rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-sm glow-cyan"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Manage Users & Roles</span>
+                </Link>
                 <a
                   href="https://supabase.com/dashboard"
                   target="_blank"

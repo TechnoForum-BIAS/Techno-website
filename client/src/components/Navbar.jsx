@@ -17,6 +17,7 @@ import {
   Activity,
   UserCheck,
   Database,
+  Users,
   LogOut
 } from 'lucide-react';
 
@@ -48,8 +49,8 @@ const Navbar = () => {
         { name: 'All Events', path: '/events', icon: Calendar },
         { name: 'Inventory Audit', path: '/inventory', icon: Boxes },
         { name: 'Cert Studio', path: '/certificates/studio', icon: Award },
-        { name: 'Circulars', path: '/announcements', icon: Bell },
-        { name: 'Admin Console', path: '/profile', icon: Database, isHighlight: true }
+        { name: 'Users & Roles', path: '/admin/users', icon: Users, isHighlight: true },
+        { name: 'Admin Console', path: '/profile', icon: Database }
       ];
     }
 

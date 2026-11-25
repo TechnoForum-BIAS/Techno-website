@@ -5,7 +5,6 @@ import {
   Lock,
   Mail,
   User,
-  Shield,
   KeyRound,
   CheckCircle2,
   AlertCircle,
@@ -32,15 +31,13 @@ const LoginPage = () => {
   // Sign In Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [loginRole, setLoginRole] = useState('user'); // Dropdown: 'user' | 'coordinator' | 'admin'
 
   // Sign Up Form State
   const [signupForm, setSignupForm] = useState({
     name: '',
     email: '',
     rollNumber: '',
-    password: '',
-    role: 'user' // Dropdown: 'user' | 'coordinator' | 'admin'
+    password: ''
   });
 
   // Verify Email Form State
@@ -85,8 +82,7 @@ const LoginPage = () => {
             if (response.credential) {
               setGoogleLoading(true);
               const data = await googleLogin({
-                credential: response.credential,
-                role: activeTab === 'signup' ? signupForm.role : loginRole
+                credential: response.credential
               });
               setGoogleLoading(false);
               if (data.success) {
@@ -101,7 +97,7 @@ const LoginPage = () => {
         console.warn('Google GSI init notice:', err);
       }
     }
-  }, [activeTab, signupForm.role, loginRole, googleLogin, navigate]);
+  }, [googleLogin, navigate]);
 
   // Resend cooldown timer
   useEffect(() => {
@@ -131,8 +127,7 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identifier: loginIdentifier,
-          password: loginPassword,
-          role: loginRole
+          password: loginPassword
         })
       });
       const data = await res.json();
@@ -278,13 +273,12 @@ const LoginPage = () => {
                 return;
               }
 
-              // Send verified profile to backend: auto-creates new account or logs in existing account
+              // Send verified profile to backend: auto-creates new account as student or logs in existing account
               const data = await googleLogin({
                 email: profile.email,
                 name: profile.name,
                 picture: profile.picture,
-                accessToken: tokenResponse.access_token,
-                role: activeTab === 'signup' ? signupForm.role : loginRole
+                accessToken: tokenResponse.access_token
               });
 
               setGoogleLoading(false);
@@ -470,23 +464,6 @@ const LoginPage = () => {
         ========================================================================= */}
         {activeTab === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
-            {/* Role Dropdown List */}
-            <div>
-              <label className="block text-slate-300 mb-1">Select Role</label>
-              <div className="relative">
-                <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                <select
-                  value={loginRole}
-                  onChange={(e) => setLoginRole(e.target.value)}
-                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-brand-cyan font-mono"
-                >
-                  <option value="user">User (Student Member)</option>
-                  <option value="coordinator">Coordinator (Events / Hardware)</option>
-                  <option value="admin">Admin (techno_forum@birlainstitute.co.in)</option>
-                </select>
-              </div>
-            </div>
-
             {/* Email or Roll Number */}
             <div>
               <label className="block text-slate-300 mb-1">University Roll Number or Email</label>
@@ -578,34 +555,19 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Roll Number & Role Selection Dropdown */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-slate-300 mb-1">University Roll No</label>
-                <div className="relative">
-                  <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="text"
-                    required
-                    value={signupForm.rollNumber}
-                    onChange={(e) => setSignupForm({ ...signupForm, rollNumber: e.target.value })}
-                    placeholder="e.g. 230101"
-                    className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-300 mb-1">Select Role</label>
-                <select
-                  value={signupForm.role}
-                  onChange={(e) => setSignupForm({ ...signupForm, role: e.target.value })}
-                  className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-cyan font-mono"
-                >
-                  <option value="user">User (Student)</option>
-                  <option value="coordinator">Coordinator</option>
-                  <option value="admin">Admin</option>
-                </select>
+            {/* University Roll Number */}
+            <div>
+              <label className="block text-slate-300 mb-1">University Roll Number</label>
+              <div className="relative">
+                <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={signupForm.rollNumber}
+                  onChange={(e) => setSignupForm({ ...signupForm, rollNumber: e.target.value })}
+                  placeholder="e.g. 230101"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-brand-cyan"
+                />
               </div>
             </div>
 
