@@ -53,41 +53,38 @@ Technoforum-website/
 │   └── .env.example
 │
 ├── database/
-│   └── supabase_schema.sql     # Ready-to-run PostgreSQL schema for Supabase
+│   ├── supabase_schema.sql         # Ready-to-run PostgreSQL schema for Supabase
+│   └── sample_students.csv         # Sample student roster for certificate testing
 │
 └── docs/
-    ├── INTERN_TASKS.md         # Detailed checklist for Groups 1, 2, and 3
-    └── FAQ_AND_TROUBLESHOOTING.md # Solutions to rookie intern issues
+    ├── ARCHITECTURE_AND_MINDMAP.md # Mermaid architecture, ERD, and mind map
+    ├── INTERN_TASKS.md             # Detailed sprint backlog for Groups 1, 2, and 3
+    └── FAQ_AND_TROUBLESHOOTING.md  # Common troubleshooting guide
 ```
 
 ---
 
-## 🚀 Quick Start Guide for Interns
+## 🚀 Quick Start Guide for Interns (1-Command Setup)
 
 ### 1. Prerequisites
 * **Node.js**: v18.0.0 or higher
 * **npm**: v9.0.0 or higher
+* **Git**: Installed and configured
 
-### 2. Installation
-Clone the repository and install dependencies in both folders:
+### 2. 1-Command Installation
+Clone the repository and install all dependencies (root, server, and client) at once:
 ```bash
 # Clone the repository
 git clone <repo-url>
 cd Technoforum-website
 
-# Install root dependencies
-npm install
+# Install all dependencies across the entire monorepo in one command:
+npm run install:all
 
-# Install server dependencies
-cd server
-npm install
-cp .env.example .env
-cd ..
-
-# Install client dependencies
-cd client
-npm install
-cd ..
+# Copy environment template files:
+cp server/.env.example server/.env
+cp client/.env.example client/.env
+```
 ```
 
 ### 3. Running Locally
